@@ -26,23 +26,22 @@ class View extends JPanel implements MouseListener {
 	View(Viz v) throws IOException
 	{
 		viz = v;
-		rand = new Random(0);
+		rand = new Random();
 		state = new byte[22];
 		size = 48;
 		board = new boolean[10][10];
 	}
 
 	public void mousePressed(MouseEvent e)
-	{
-		int tempState = state[rand.nextInt(22)] + (rand.nextInt(2) == 0 ? -1 : 1);
-		
+	{	
+		state[rand.nextInt(2)] += (rand.nextInt(2) == 0 ? -1 : 1);
 		
 		int id = 0;
 		checkValidStates(board, state[2*id],state[2*id+1]); //Check valid states to make sure its a valid move
 		
 		
-		
-		//state[3]+=-2;
+		//state[0]+=2;
+		//state[1]+=-2;
 		
 		for(int i = 0; i < 11; i++)
 		System.out.print("(" + state[2 * i] + "," + state[2 * i + 1] + ") ");
@@ -69,19 +68,19 @@ class View extends JPanel implements MouseListener {
 		int x1, int y1, int x2, int y2, int x3, int y3)
 	{
 		//Checking that they havent been drawn on, if not we can move the piece here and set all the locations to true
-		if(board[x1][y1] != true && board[x2][y2] != true && board[x3][y3] != true){
+		//if(board[x1][y1] != true && board[x2][y2] != true && board[x3][y3] != true){
 			board[x1][y1] = true; 
 			board[x2][y2] = true;
 			board[x3][y3] = true;
-		}
+			graphics.setColor(new Color(red, green, blue));
+			b(state[2 * id] + x1, state[2 * id + 1] + y1);
+			b(state[2 * id] + x2, state[2 * id + 1] + y2);
+			b(state[2 * id] + x3, state[2 * id + 1] + y3);
+		/*}
 		else{
 			System.out.println("Couldn't draw one of three - add more debug");
 			return false;
-		}
-		graphics.setColor(new Color(red, green, blue));
-		b(state[2 * id] + x1, state[2 * id + 1] + y1);
-		b(state[2 * id] + x2, state[2 * id + 1] + y2);
-		b(state[2 * id] + x3, state[2 * id + 1] + y3);
+		}*/
 		return true;
 	}
 
@@ -94,17 +93,24 @@ class View extends JPanel implements MouseListener {
 		//The only thing that changes when drawing, is the state[x][y] values. These get added to the x4, y4 coordinates
 		//When you change state[2*id], it will get added to x4 since x4 never changes. 
 		//That is to mean that to get the previous state of the block, you need to
-		if(board[x4][y4]==true){
+		/*if(board[x4][y4]==true){
 			System.out.println("Can't draw x4,y4 for " + id);
 			return false;
-		}
+		} */
 		
-		else{
-			board[x4][y4] = true; //Set new state location. 
-			if(shape(id, red, green, blue, x1, y1, x2, y2, x3, y3))
-				System.out.println("Worked");
-			b(state[2 * id] + x4, state[2 * id + 1] + y4);
-		}
+		//else{ //We can draw the piece, but we need to check the other squares fit as well
+			
+			//If the rest of the shape can be drawn, lets do it
+		//	if(shape(id, red, green, blue, x1, y1, x2, y2, x3, y3)){
+		//		System.out.println("Worked");
+				shape(id, red, green, blue, x1, y1, x2, y2, x3, y3);
+				board[x4][y4] = true; //Set new state location AFTER you've confirmed you can draw the entire piece
+				b(state[2 * id] + x4, state[2 * id + 1] + y4); //we've confirmed we can draw piece now
+		//	}
+		//	else
+		//		System.out.println("Can't draw x1,x2,or x3 I don't know which.");
+			
+		//}
 		return true;
 	}
 
