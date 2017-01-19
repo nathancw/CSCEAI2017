@@ -35,39 +35,100 @@ class View extends JPanel implements MouseListener {
 	{
 		//state[rand.nextInt(22)] += (rand.nextInt(2) == 0 ? -1 : 1);
 		int id = 10;
-	
+		boolean validMove;
+		
 		//Looping through all the shapes and seeing if it can move in that direction
 		for(int index = 0; index < 11; index++){
 			
-		//	moveLeft(index);
-		//	moveRight(index);
-		//	moveUp(index);
-		//	moveDown(index);
+			validMove = moveLeft(index);
+			if(validMove)
+				viz.repaint(); 
 			
-			state[2*index] = (byte) (state[2*index] - 1);
+			validMove = moveRight(index);
+			if(validMove)
+				viz.repaint();
 			
-			boolean validMove = drawShapes(id, state);
-			System.out.println("Valid move: " + validMove + " i: " + index);
-			if(validMove){
-				
-				for(int i = 0; i < 11; i++)
-				System.out.print("(" + state[2 * i] + "," +
-						state[2 * i + 1] + ") ");
-					System.out.println();
-
-					viz.repaint();
-			}
-			else{
-				state[2*index] = (byte) (state[2*index] + 1);
-			}
-			//state[2*i+1] = (byte) (state[2*i+1] + 1)
+			validMove = moveUp(index);
+			if(validMove)
+				viz.repaint(); 
+			
+			validMove = moveDown(index);
+			if(validMove)
+				viz.repaint();
 		}
 		
 		
 	}
 
+	public boolean moveDown(int id) {
+	
+		state[2*id+1] = (byte) (state[2*id+1] + 1);
+		boolean validMove = drawShapes(id, state);
+		
+		if(validMove)
+			return true;
+		else{
+			state[2*id+1] = (byte) (state[2*id+1] - 1);
+			return false;
+		}
+	}
 
-	private boolean drawShapes(int id, byte[] state2) {
+	public boolean moveUp(int id) {
+		state[2*id+1] = (byte) (state[2*id+1] - 1);
+		boolean validMove = drawShapes(id, state);
+		
+		if(validMove)
+			return true;
+		else{
+			state[2*id+1] = (byte) (state[2*id+1] + 1);
+			return false;
+		}
+	}
+
+	public boolean moveRight(int id) {
+		
+		state[2*id] = (byte) (state[2*id] + 1);
+		boolean validMove = drawShapes(id, state);
+		
+		if(validMove)
+			return true;
+		else{
+			state[2*id] = (byte) (state[2*id] - 1);
+			return false;
+		}
+
+	}
+
+	public boolean moveLeft(int id) {
+		
+		state[2*id] = (byte) (state[2*id] - 1);
+		boolean validMove = drawShapes(id, state);
+		
+		if(validMove)
+			return true;
+		else{
+			state[2*id] = (byte) (state[2*id] + 1);
+			return false;
+		}
+		
+		/*validMove = drawShapes(id, state);
+		System.out.println("Valid move: " + validMove + " i: " + index);
+		if(validMove){
+			
+			for(int i = 0; i < 11; i++)
+			System.out.print("(" + state[2 * i] + "," +
+					state[2 * i + 1] + ") ");
+				System.out.println();
+
+				viz.repaint();
+		}
+		else{
+			state[2*index] = (byte) (state[2*index] + 1);
+		} */
+		
+	}
+
+	public boolean drawShapes(int id, byte[] state2) {
 	
 		for(int x = 0; x < 10; x++)
 			for(int c = 0; c < 10; c++)
