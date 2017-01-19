@@ -11,8 +11,52 @@ import java.awt.Graphics;
 import java.io.File;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Random;
 import java.awt.Color;
+
+class GameState
+{
+	///GameState prev;
+	byte[] state;
+	boolean visited;
+	
+	public GameState(byte[] state2) {
+		state = state2;
+	}
+
+	public void setVisited(boolean val){
+		visited = val;
+	}
+	
+	public boolean hasBeenVisited(){
+		return visited;
+	}
+/*	GameState(GameState _prev)
+	{
+		prev = _prev;
+		state = new byte[22];
+	}
+*/
+}
+
+class StateComparator implements Comparator<GameState>
+{
+	public int compare(GameState a, GameState b)
+	{
+		for(int i = 0; i < 22; i++)
+		{
+			if(a.state[i] < b.state[i])
+				return -1;
+			else if(a.state[i] > b.state[i])
+				return 1;
+		}
+		return 0;
+	}
+}  
+
 
 class View extends JPanel implements MouseListener {
 	Viz viz;
@@ -22,6 +66,13 @@ class View extends JPanel implements MouseListener {
 	int size;
 	boolean[][] board;
 
+	class Node {
+		   char data;
+		   public Node(char c) {
+		      this.data=c;
+		   }
+		}
+	
 	View(Viz v) throws IOException
 	{
 		viz = v;
@@ -30,11 +81,36 @@ class View extends JPanel implements MouseListener {
 		size = 48;
 		board = new boolean[10][10];
 	}
-
+	
+	public void bfs(){
+		
+		// BFS uses Queue data structure
+		Queue queue = new LinkedList();
+		GameState root = new GameState(state);
+		queue.add(root);
+		root.setVisited(true);
+		
+		while(!queue.isEmpty()) {
+			GameState node = (GameState)queue.remove();
+			//Node node = (Node)queue.remove();
+			GameState child = null;
+			
+			//STOPPED HERE
+			/*while((child=getUnvisitedChildNode(node))!=null) {
+				child.visited=true;
+				printNode(child);
+				queue.add(child);
+			}*/
+		}
+		// Clear visited property of nodes
+		//clearNodes();
+		
+		
+	}
+	
 	public void mousePressed(MouseEvent e)
 	{
-		//state[rand.nextInt(22)] += (rand.nextInt(2) == 0 ? -1 : 1);
-		int id = 10;
+		/*
 		boolean validMove;
 		
 		//Looping through all the shapes and seeing if it can move in that direction
@@ -56,7 +132,7 @@ class View extends JPanel implements MouseListener {
 			if(validMove)
 				viz.repaint();
 		}
-		
+	*/
 		
 	}
 
@@ -192,13 +268,6 @@ class View extends JPanel implements MouseListener {
 			return true;
 	}
 
-	
-	/*public void b(int x, int y)
-	{
-		
-		graphics.fillRect(size * x, size * y, size, size);
-	} */
-
 	// Draw a 3-block piece
 	public boolean shape(int id, int red, int green, int blue,
 		int x1, int y1, int x2, int y2, int x3, int y3)
@@ -253,6 +322,8 @@ class View extends JPanel implements MouseListener {
 		shape(9, 0, 0, 255, 6, 2, 6, 3, 5, 3); 
 		shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2);
 	}
+
+	
 }
 
 public class Viz extends JFrame
@@ -260,12 +331,13 @@ public class Viz extends JFrame
 	public Viz() throws Exception
 	{
 		View view = new View(this);
-		view.addMouseListener(view);
+		view.bfs();
+		/*view.addMouseListener(view);
 		this.setTitle("Puzzle");
 		this.setSize(482, 505);
 		this.getContentPane().add(view);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setVisible(true);
+		this.setVisible(true); */
 	}
 
 	public static void main(String[] args) throws Exception
