@@ -122,9 +122,9 @@ class Search implements MouseListener {
 		
 		byte[] objective = state.clone();
 		
-		int solutionID = 7;
-		byte x = -2;
-		byte y = 0;
+		int solutionID = 0;
+		byte x = 4;
+		byte y = -2;
 		
 		
 		objective[solutionID*2]=x;
@@ -141,14 +141,14 @@ class Search implements MouseListener {
 				break;
 			}
 			else{
-			
+				
 				//Populat the queue with each adjacent nodes. 
 				for(int index = 0; index < 11; index++){
 					
 					moveLeft(index, node);
 					moveRight(index, node);
 					moveUp(index, node);
-					moveDown(index, node);
+					moveDown(index,node);
 				}
 			}
 		
@@ -180,74 +180,74 @@ class Search implements MouseListener {
 	}
 
 	public boolean moveDown(int id, GameState root) {
+	
 		byte[] state = root.getState().clone();
 		state[2*id+1] = (byte) (state[2*id+1] + 1);
-		boolean validMove = drawShapes(id, state);
+		GameState down = new GameState(state, root);
 		
-		if(validMove){
-			if(!set.contains(new GameState(state, root)))
-			queue.add(new GameState(state, root)); //add the game state
-			return true;
+		if(!set.contains(down)){
+			boolean validMove = drawShapes(id, state);
+			
+			if(validMove){
+				queue.add(down); //add the game state
+				set.add(down);
+				return true;
+			}
 		}
-		else{
-			//state[2*id+1] = (byte) (state[2*id+1] - 1);
-			return false;
-		}
+		return false;
 	}
 
 	public boolean moveUp(int id, GameState root) {
+
 		byte[] state = root.getState().clone();
 		state[2*id+1] = (byte) (state[2*id+1] - 1);
-		boolean validMove = drawShapes(id, state);
+		GameState up = new GameState(state, root);
 		
-		if(validMove){
-			if(!set.contains(new GameState(state, root)))
-			queue.add(new GameState(state, root)); //add the game state
-			return true;
+		if(!set.contains(up)){
+			boolean validMove = drawShapes(id, state);
+				if(validMove){
+						queue.add(up); //add the game state
+						set.add(up);
+						return true;
+				}
 		}
-		else{
-			//state[2*id+1] = (byte) (state[2*id+1] + 1);
-			return false;
-		}
+		return false;
 	}
 
 	public boolean moveRight(int id, GameState root) {
 		
 		byte[] state = root.getState().clone();
-		
 		state[2*id] = (byte) (state[2*id] + 1);
-		boolean validMove = drawShapes(id, state);
+		GameState right = new GameState(state, root);
 		
-		if(validMove){
-			if(!set.contains(new GameState(state, root)))
-			queue.add(new GameState(state, root)); //add the game state
-			return true;
+		if(!set.contains(right)){
+			boolean validMove = drawShapes(id, state);
+			if(validMove){
+				queue.add(right); //add the game state
+				set.add(right);
+				return true;
+			}
+			
 		}
-		else{
-			//state[2*id] = (byte) (state[2*id] - 1);
-			return false;
-		}
+		return false;
 
 	}
 
 	public boolean moveLeft(int id, GameState root) {
 		
 		byte[] state = root.getState().clone();
-		
 		state[2*id] = (byte) (state[2*id] - 1);
-		boolean validMove = drawShapes(id, state);
+		GameState left = new GameState(state, root);
 		
-		if(validMove){
-			if(!set.contains(new GameState(state, root))){
-				//System.out.println("Valid move");
-				queue.add(new GameState(state, root)); //add the game state
+		if(!set.contains(left)){
+			boolean validMove = drawShapes(id, state);
+			if(validMove){
+					queue.add(left); //add the game state
+					set.add(left);
+				}
+				return true;
 			}
-			return true;
-		}
-		else{
-			//state[2*id] = (byte) (state[2*id] + 1);
-			return false;
-		}
+		return false;
 	
 	}
 
@@ -267,27 +267,27 @@ class Search implements MouseListener {
 		
 		
 		// Draw the pieces
-		if(!shape(0, 255, 0, 0, 1, 3, 2, 3, 1, 4, 2, 4, state))
+		if(!shape(0, 1, 3, 2, 3, 1, 4, 2, 4, state))
 				return false;
-		else if(!shape(1, 0, 255, 0, 1, 5, 1, 6, 2, 6, state))
+		else if(!shape(1, 1, 5, 1, 6, 2, 6, state))
 			return false;
-		else if(!shape(2, 128, 128, 255, 2, 5, 3, 5, 3, 6, state))
+		else if(!shape(2, 2, 5, 3, 5, 3, 6, state))
 				return false;
-		else if(!shape(3, 255, 128, 128, 3, 7, 3, 8, 4, 8, state))
+		else if(!shape(3, 3, 7, 3, 8, 4, 8, state))
 				return false;
-		else if(!shape(4, 255, 255, 128, 4, 7, 5, 7, 5, 8, state))
+		else if(!shape(4, 4, 7, 5, 7, 5, 8, state))
 				return false;
-		else if(!shape(5, 128, 128, 0, 6, 7, 7, 7, 6, 8, state))
+		else if(!shape(5, 6, 7, 7, 7, 6, 8, state))
 				return false;
-		else if(!shape(6, 0, 128, 128, 5, 4, 5, 5, 5, 6, 4, 5, state))
+		else if(!shape(6, 5, 4, 5, 5, 5, 6, 4, 5, state))
 				return false;
-		else if(!shape(7, 0, 128, 0, 6, 4, 6, 5, 6, 6, 7, 5, state))
+		else if(!shape(7, 6, 4, 6, 5, 6, 6, 7, 5, state))
 				return false;
-		else if(!shape(8, 0, 255, 255, 8, 5, 8, 6, 7, 6,state)) 
+		else if(!shape(8, 8, 5, 8, 6, 7, 6,state)) 
 				return false; 
-		else if(!shape(9, 0, 0, 255, 6, 2, 6, 3, 5, 3,state))
+		else if(!shape(9, 6, 2, 6, 3, 5, 3,state))
 				return false; 
-		else if(!shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2, state)){
+		else if(!shape(10, 5, 1, 6, 1, 5, 2, state)){
 			return false;
 		}
 		else
@@ -316,7 +316,7 @@ class Search implements MouseListener {
 	}
 
 	// Draw a 3-block piece
-	public boolean shape(int id, int red, int green, int blue,
+	public boolean shape(int id,
 		int x1, int y1, int x2, int y2, int x3, int y3, byte[] state)
 	{
 		//graphics.setColor(new Color(red, green, blue));
@@ -328,49 +328,15 @@ class Search implements MouseListener {
 	}
 
 	// Draw a 4-block piece
-	public boolean shape(int id, int red, int green, int blue,
+	public boolean shape(int id,
 		int x1, int y1, int x2, int y2,
 		int x3, int y3, int x4, int y4, byte[] state)
 	{
-		boolean s1 = shape(id, red, green, blue, x1, y1, x2, y2, x3, y3, state);
+		boolean s1 = shape(id, x1, y1, x2, y2, x3, y3, state);
 		boolean b1 = b(state[2 * id] + x4, state[2 * id + 1] + y4);
 		
 		return (s1 && b1);
 	}
-
-	public void paintComponent(Graphics g)
-	{
-		for(int x = 0; x < 10; x++)
-			for(int c = 0; c < 10; c++)
-				board[x][c] = false;
-	
-		
-		// Draw the black squares
-		graphics = g;
-		g.setColor(new Color(0, 0, 0));
-		for(int i = 0; i < 10; i++) { b(i, 0); b(i, 9); }
-		for(int i = 1; i < 9; i++) { b(0, i); b(9, i); }
-		b(1, 1); b(1, 2); b(2, 1);
-		b(7, 1); b(8, 1); b(8, 2);
-		b(1, 7); b(1, 8); b(2, 8);
-		b(8, 7); b(7, 8); b(8, 8);
-		b(3, 4); b(4, 4); b(4, 3);
-
-		// Draw the pieces
-		shape(0, 255, 0, 0, 1, 3, 2, 3, 1, 4, 2, 4,state);
-		shape(1, 0, 255, 0, 1, 5, 1, 6, 2, 6,state);
-		shape(2, 128, 128, 255, 2, 5, 3, 5, 3, 6,state);
-		shape(3, 255, 128, 128, 3, 7, 3, 8, 4, 8,state);
-		shape(4, 255, 255, 128, 4, 7, 5, 7, 5, 8,state);
-		shape(5, 128, 128, 0, 6, 7, 7, 7, 6, 8,state);
-		shape(6, 0, 128, 128, 5, 4, 5, 5, 5, 6, 4, 5,state);
-		shape(7, 0, 128, 0, 6, 4, 6, 5, 6, 6, 7, 5,state);
-		shape(8, 0, 255, 255, 8, 5, 8, 6, 7, 6,state); 
-		shape(9, 0, 0, 255, 6, 2, 6, 3, 5, 3,state); 
-		shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2,state); 
-	}
-
-	
 }
 
 public class BFS extends JFrame
