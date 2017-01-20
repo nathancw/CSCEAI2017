@@ -1,3 +1,4 @@
+package puzzlegame;
 import javax.swing.JFrame;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -41,10 +42,18 @@ class View extends JPanel implements MouseListener {
 	public void mousePressed(MouseEvent e)
 	{
 		
-		if(!solution.isEmpty())
-			state = (byte[]) solution.pop();
-		
-		viz.repaint();
+		ActionListener animate = new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+            	//while(!solution.isEmpty()){
+        		if(!solution.isEmpty())
+        			state = (byte[]) solution.pop();
+        		viz.repaint();
+                //repaint();
+            }
+        };
+        Timer timer = new Timer(100,animate);
+        timer.start();
+       
 	}
 
 	public void mouseReleased(MouseEvent e) {    }

@@ -1,3 +1,4 @@
+package puzzlegame;
 import javax.swing.JFrame;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
