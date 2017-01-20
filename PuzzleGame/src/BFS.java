@@ -123,8 +123,8 @@ class Search implements MouseListener {
 		byte[] objective = state.clone();
 		
 		int solutionID = 7;
-		byte x = 0;
-		byte y = -3;
+		byte x = -2;
+		byte y = 0;
 		
 		
 		objective[solutionID*2]=x;
