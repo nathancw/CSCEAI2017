@@ -24,15 +24,27 @@ class GameState
 	boolean visited;
 	
 	public GameState(byte[] state2) {
-		state = state2;
+		this.state = state2;
 	}
 
 	public void setVisited(boolean val){
-		visited = val;
+		this.visited = val;
 	}
 	
 	public boolean hasBeenVisited(){
 		return visited;
+	}
+	
+	public byte[] getState(){
+		return state;
+	}
+	
+	public void print(){
+		for(int i = 0; i < 11; i++)
+			System.out.print("(" + this.state[2 * i] + "," +
+					this.state[2 * i + 1] + ") ");
+				System.out.println();
+
 	}
 /*	GameState(GameState _prev)
 	{
@@ -65,6 +77,7 @@ class View extends JPanel implements MouseListener {
 	Graphics graphics;
 	int size;
 	boolean[][] board;
+	Queue<GameState> queue;
 
 	class Node {
 		   char data;
@@ -80,28 +93,38 @@ class View extends JPanel implements MouseListener {
 		state = new byte[22];
 		size = 48;
 		board = new boolean[10][10];
+		queue = new LinkedList<GameState>();
 	}
 	
 	public void bfs(){
 		
 		// BFS uses Queue data structure
-		Queue queue = new LinkedList();
+		
 		GameState root = new GameState(state);
 		queue.add(root);
 		root.setVisited(true);
 		
-		while(!queue.isEmpty()) {
-			GameState node = (GameState)queue.remove();
-			//Node node = (Node)queue.remove();
+		boolean validMove = false;
+		
+		for(int index = 0; index < 11; index++){
+			
+			moveLeft(index, root);
+			moveRight(index, root);
+			moveUp(index, root);
+			moveDown(index, root);
+		}
+		
+		/*while(!queue.isEmpty()) {
+			GameState node = queue.remove();
 			GameState child = null;
 			
 			//STOPPED HERE
-			/*while((child=getUnvisitedChildNode(node))!=null) {
+			while((child=getUnvisitedChildNode(node))!=null) {
 				child.visited=true;
 				printNode(child);
 				queue.add(child);
-			}*/
-		}
+			}
+		} */
 		// Clear visited property of nodes
 		//clearNodes();
 		
@@ -136,75 +159,73 @@ class View extends JPanel implements MouseListener {
 		
 	}
 
-	public boolean moveDown(int id) {
-	
+	public boolean moveDown(int id, GameState root) {
+		byte[] state = root.getState().clone();
 		state[2*id+1] = (byte) (state[2*id+1] + 1);
 		boolean validMove = drawShapes(id, state);
 		
-		if(validMove)
+		if(validMove){
+			queue.add(new GameState(state)); //add the game state
 			return true;
+		}
 		else{
-			state[2*id+1] = (byte) (state[2*id+1] - 1);
+			//state[2*id+1] = (byte) (state[2*id+1] - 1);
 			return false;
 		}
 	}
 
-	public boolean moveUp(int id) {
+	public boolean moveUp(int id, GameState root) {
+		byte[] state = root.getState().clone();
 		state[2*id+1] = (byte) (state[2*id+1] - 1);
 		boolean validMove = drawShapes(id, state);
 		
-		if(validMove)
+		if(validMove){
+			queue.add(new GameState(state)); //add the game state
 			return true;
+		}
 		else{
-			state[2*id+1] = (byte) (state[2*id+1] + 1);
+			//state[2*id+1] = (byte) (state[2*id+1] + 1);
 			return false;
 		}
 	}
 
-	public boolean moveRight(int id) {
+	public boolean moveRight(int id, GameState root) {
+		
+		byte[] state = root.getState().clone();
 		
 		state[2*id] = (byte) (state[2*id] + 1);
 		boolean validMove = drawShapes(id, state);
 		
-		if(validMove)
+		if(validMove){
+			queue.add(new GameState(state)); //add the game state
 			return true;
+		}
 		else{
-			state[2*id] = (byte) (state[2*id] - 1);
+			//state[2*id] = (byte) (state[2*id] - 1);
 			return false;
 		}
 
 	}
 
-	public boolean moveLeft(int id) {
+	public boolean moveLeft(int id, GameState root) {
+		
+		byte[] state = root.getState().clone();
 		
 		state[2*id] = (byte) (state[2*id] - 1);
 		boolean validMove = drawShapes(id, state);
 		
-		if(validMove)
+		if(validMove){
+			queue.add(new GameState(state)); //add the game state
 			return true;
+		}
 		else{
-			state[2*id] = (byte) (state[2*id] + 1);
+			//state[2*id] = (byte) (state[2*id] + 1);
 			return false;
 		}
-		
-		/*validMove = drawShapes(id, state);
-		System.out.println("Valid move: " + validMove + " i: " + index);
-		if(validMove){
-			
-			for(int i = 0; i < 11; i++)
-			System.out.print("(" + state[2 * i] + "," +
-					state[2 * i + 1] + ") ");
-				System.out.println();
-
-				viz.repaint();
-		}
-		else{
-			state[2*index] = (byte) (state[2*index] + 1);
-		} */
-		
+	
 	}
 
-	public boolean drawShapes(int id, byte[] state2) {
+	public boolean drawShapes(int id, byte[] state) {
 	
 		for(int x = 0; x < 10; x++)
 			for(int c = 0; c < 10; c++)
@@ -220,27 +241,27 @@ class View extends JPanel implements MouseListener {
 		
 		
 		// Draw the pieces
-		if(!shape(0, 255, 0, 0, 1, 3, 2, 3, 1, 4, 2, 4))
+		if(!shape(0, 255, 0, 0, 1, 3, 2, 3, 1, 4, 2, 4, state))
 				return false;
-		else if(!shape(1, 0, 255, 0, 1, 5, 1, 6, 2, 6))
+		else if(!shape(1, 0, 255, 0, 1, 5, 1, 6, 2, 6, state))
 			return false;
-		else if(!shape(2, 128, 128, 255, 2, 5, 3, 5, 3, 6))
+		else if(!shape(2, 128, 128, 255, 2, 5, 3, 5, 3, 6, state))
 				return false;
-		else if(!shape(3, 255, 128, 128, 3, 7, 3, 8, 4, 8))
+		else if(!shape(3, 255, 128, 128, 3, 7, 3, 8, 4, 8, state))
 				return false;
-		else if(!shape(4, 255, 255, 128, 4, 7, 5, 7, 5, 8))
+		else if(!shape(4, 255, 255, 128, 4, 7, 5, 7, 5, 8, state))
 				return false;
-		else if(!shape(5, 128, 128, 0, 6, 7, 7, 7, 6, 8))
+		else if(!shape(5, 128, 128, 0, 6, 7, 7, 7, 6, 8, state))
 				return false;
-		else if(!shape(6, 0, 128, 128, 5, 4, 5, 5, 5, 6, 4, 5))
+		else if(!shape(6, 0, 128, 128, 5, 4, 5, 5, 5, 6, 4, 5, state))
 				return false;
-		else if(!shape(7, 0, 128, 0, 6, 4, 6, 5, 6, 6, 7, 5))
+		else if(!shape(7, 0, 128, 0, 6, 4, 6, 5, 6, 6, 7, 5, state))
 				return false;
-		else if(!shape(8, 0, 255, 255, 8, 5, 8, 6, 7, 6)) 
+		else if(!shape(8, 0, 255, 255, 8, 5, 8, 6, 7, 6,state)) 
 				return false; 
-		else if(!shape(9, 0, 0, 255, 6, 2, 6, 3, 5, 3))
+		else if(!shape(9, 0, 0, 255, 6, 2, 6, 3, 5, 3,state))
 				return false; 
-		else if(!shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2)){
+		else if(!shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2, state)){
 			return false;
 		}
 		else
@@ -264,15 +285,15 @@ class View extends JPanel implements MouseListener {
 			}
 		
 		board[x][y] = true;
-		graphics.fillRect(size * x, size * y, size, size);
+		//graphics.fillRect(size * x, size * y, size, size);
 			return true;
 	}
 
 	// Draw a 3-block piece
 	public boolean shape(int id, int red, int green, int blue,
-		int x1, int y1, int x2, int y2, int x3, int y3)
+		int x1, int y1, int x2, int y2, int x3, int y3, byte[] state)
 	{
-		graphics.setColor(new Color(red, green, blue));
+		//graphics.setColor(new Color(red, green, blue));
 		boolean b1 = b(state[2 * id] + x1, state[2 * id + 1] + y1);
 		boolean b2 = b(state[2 * id] + x2, state[2 * id + 1] + y2);
 		boolean b3 = b(state[2 * id] + x3, state[2 * id + 1] + y3);
@@ -283,9 +304,9 @@ class View extends JPanel implements MouseListener {
 	// Draw a 4-block piece
 	public boolean shape(int id, int red, int green, int blue,
 		int x1, int y1, int x2, int y2,
-		int x3, int y3, int x4, int y4)
+		int x3, int y3, int x4, int y4, byte[] state)
 	{
-		boolean s1 = shape(id, red, green, blue, x1, y1, x2, y2, x3, y3);
+		boolean s1 = shape(id, red, green, blue, x1, y1, x2, y2, x3, y3, state);
 		boolean b1 = b(state[2 * id] + x4, state[2 * id + 1] + y4);
 		
 		return (s1 && b1);
@@ -293,7 +314,7 @@ class View extends JPanel implements MouseListener {
 
 	public void paintComponent(Graphics g)
 	{
-		for(int x = 0; x < 10; x++)
+		/*for(int x = 0; x < 10; x++)
 			for(int c = 0; c < 10; c++)
 				board[x][c] = false;
 	
@@ -320,7 +341,7 @@ class View extends JPanel implements MouseListener {
 		shape(7, 0, 128, 0, 6, 4, 6, 5, 6, 6, 7, 5);
 		shape(8, 0, 255, 255, 8, 5, 8, 6, 7, 6); 
 		shape(9, 0, 0, 255, 6, 2, 6, 3, 5, 3); 
-		shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2);
+		shape(10, 255, 128, 0, 5, 1, 6, 1, 5, 2); */
 	}
 
 	
