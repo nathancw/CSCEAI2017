@@ -1,17 +1,7 @@
 package puzzlegame;
-import javax.swing.JFrame;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import javax.swing.Timer;
-import javax.swing.JPanel;
-import java.awt.Graphics;
-import java.awt.Image;
-import javax.imageio.ImageIO;
+
 import java.io.IOException;
-import java.awt.Graphics;
 import java.io.File;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -75,11 +65,10 @@ class StateComparator implements Comparator<GameState>
 }  
 
 
-class Search implements MouseListener {
+class Search {
 	BFS viz;
 	Random rand;
 	byte[] state;
-	Graphics graphics;
 	int size;
 	boolean[][] board;
 	Queue<GameState> queue;
@@ -137,7 +126,7 @@ class Search implements MouseListener {
 			GameState child = null;
 			
 			if(node.getState()[solutionID*2]==objective[solutionID*2] && node.getState()[solutionID*2+1]==objective[solutionID*2+1]){
-				System.out.println("found objective");
+			//	System.out.println("found objective");
 				goal = node;
 				break;
 			}
@@ -161,11 +150,17 @@ class Search implements MouseListener {
 		int moveCount = -1;
 		while(current!=null){
 			moveCount++;
-			solution.add(current.getState());
-			current.print();
+			//solution.add(current.getState());
+			solution.add(current);
+			//current.print();
 			current = current.prev;
 		}
-		System.out.println("Move Count : " + moveCount);
+		
+		while(!solution.isEmpty()){
+			((GameState) solution.pop()).print();
+			
+		}
+		//System.out.println("Move Count : " + moveCount);
 		
 	}
 	
@@ -173,13 +168,6 @@ class Search implements MouseListener {
 		return solution;
 	}
 	
-	public void mousePressed(MouseEvent e)
-	{
-	
-		
-
-	}
-
 	public boolean moveDown(int id, GameState root) {
 	
 		byte[] state = root.getState().clone();
@@ -297,10 +285,6 @@ class Search implements MouseListener {
 		
 	}
 
-	public void mouseReleased(MouseEvent e) {    }
-	public void mouseEntered(MouseEvent e) {    }
-	public void mouseExited(MouseEvent e) {    }
-	public void mouseClicked(MouseEvent e) {    }
 
 	//B checks valid states
 	public boolean b(int x, int y)
@@ -340,7 +324,7 @@ class Search implements MouseListener {
 	}
 }
 
-public class BFS extends JFrame
+public class BFS
 {
 	Search search;
 	public BFS() throws Exception
