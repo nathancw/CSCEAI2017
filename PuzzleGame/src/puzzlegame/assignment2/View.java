@@ -48,8 +48,8 @@ public class View extends JFrame implements ActionListener {
 		Image image_robot;
 
 		MyPanel() throws Exception {
-		    String workDir = "C:\\Users\\jisenw1\\git\\CSCEAI2017\\PuzzleGame\\src\\puzzlegame\\assignment2\\";
-			this.image_robot = ImageIO.read(new File( workDir + "robot_blue.png"));
+	
+			this.image_robot = ImageIO.read(new File("robot_blue.png"));
 		}
 
 		void drawTerrain(Graphics g) {

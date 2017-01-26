@@ -24,10 +24,9 @@ class Model {
 	}
 
 	void initGame() throws Exception {
-	    System.out.println("Working Directory = " +
-	              System.getProperty("user.dir"));
-	    String workDir = "C:\\Users\\jisenw1\\git\\CSCEAI2017\\PuzzleGame\\src\\puzzlegame\\assignment2\\";
-		BufferedImage bufferedImage = ImageIO.read(new File(workDir + "terrain.png"));
+
+	    
+		BufferedImage bufferedImage = ImageIO.read(new File("terrain.png"));
 		if(bufferedImage.getWidth() != 60 || bufferedImage.getHeight() != 60)
 			throw new Exception("Expected the terrain image to have dimensions of 60-by-60");
 		terrain = ((DataBufferByte)bufferedImage.getRaster().getDataBuffer()).getData();

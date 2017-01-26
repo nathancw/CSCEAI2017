@@ -1,7 +1,9 @@
 package puzzlegame.assignment2;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics;
@@ -24,7 +26,10 @@ class Agent {
 				break;
 			Block startState = new Block(m.getX(),m.getY(),0.0,null);
 			Block goal = new Block(e.getX(),e.getY(),0.0,null);
-			m.setDestination(e.getX(), e.getY());
+			UFS ufs = new UFS();
+			ufs.uniform_cost_search(m, startState, goal);
+		
+			//m.setDestination(e.getX(), e.getY());
 		}
 	}
 
@@ -46,61 +51,112 @@ class Block {
 		  this.x = x;
 		  this.y = y;
 	  }
+	  
+	  void print(){
+		  System.out.println("(" + x + "," + y + ") cost : " + cost);
+	  }
 	}
 
+class BlockComparator implements Comparator<Block>
+{
+	public int compare(Block a, Block b)
+	{
+			if(a.x != b.x || a.y != b.y)
+				return -1;
+		return 0;
+	}
+}  
+class CostComparator implements Comparator<Block>
+{
+	public int compare(Block a, Block b)
+	{
+			if(a.cost > b.cost)
+				return 1;
+			else if(a.cost < b.cost)
+					return -1;
+		return 0;
+	}
+}  
+
 class UFS {
-		
-	  public Block uniform_cost_search(Block startState, Block goal) {
-		  
-	    PriorityQueue frontier = new PriorityQueue();
-	    Set beenthere = new TreeSet();
-	    
+	BlockComparator comp;
+	CostComparator costComp;
+	PriorityQueue frontier;
+	TreeSet<Block> beenThere;
+	Stack path;
+	
+	  public Stack uniform_cost_search(Model m, Block startState, Block goal) {
+		 
+		comp = new BlockComparator();
+		costComp = new CostComparator();
+		frontier = new PriorityQueue(costComp);
+		beenThere = new TreeSet<Block>(comp);
+		path = new Stack<Block>();
 	    //Block startState = new Block(Model.getX(),Model.getY(),0.0,null);
 	    //startState.cost = 0.0;
 	    //startState.parent = null;
 	    
-	    beenthere.add(startState);
+	    beenThere.add(startState);
 	    frontier.add(startState);
-	    
+	    System.out.println("Starting UFS");
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
 	      
-	      if(s.x == goal.x && s.y == goal.y)
-	        return s;
-	      
+	      if(s.x == goal.x || s.y == goal.y){
+	    	  goal.parent = s;
+	    	  break;
+	      }
 	      //
 	      //MoveUpRight(); //x+10, y-10;
-	      //MoveRight(); //x+10
+	      MoveRight(m,s); //x+10
 	      //MoveDownRight(); //x+10, y+10
 	      //MoveDown(); //y+10
 	     // MoveDownLeft();//x-10, y+10
 	      //MoveLeft(); //x-10
 	     // MoveUpLeft();//x-10, y-10
 	      //MoveUp(); //y-10
-	      
-	      
-	     /* for(int i = 0; i < )
-	      
-	      
-	      
-	      for each action, a {
-	        child = transition(s, a); // compute the next state
-	        acost = action_cost(s, a); // compute the cost of the action
-	        if(child is in beenthere) {
-	          oldchild = beenthere.find(child)
-	          if(s.cost + acost < oldchild.cost) {
-	            oldchild.cost = s.cost + acost;
-	            oldchild.parent = s;
-	          }
-	        }
-	        else {
-	          child.cost = s.cost + acost;
-	          child.parent = s;
-	          frontier.add(child);
-	          beenthere.add(child);
-	        }
-	      }*/
+	     
 	    } 
-	    throw new RuntimeException("There is no path to the goal");
+	    Block current = goal;
+	    while(current!=null){
+	    	path.add(current.parent);
+	    	current = current.parent;	
+	    }
+	    
+	    current = (Block) path.pop();
+	    while(!path.isEmpty()){
+	    	current.print();
+	    }
+	    
+	    return path;
+	    //throw new RuntimeException("There is no path to the goal");
 	  }
+
+	private void MoveRight(Model m, Block root) {
+		
+		System.out.println("Moving right.");
+		float x = (float) (root.x + 10.0);
+		float y = (float) (root.y); //MAY BE TOO SLOW
+		
+		float cost = m.getTravelSpeed(x,y) * 10; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+		
+		Block right = new Block(x,y,cost,root);
+        Block oldChild;
+        
+        if(beenThere.contains(right)) {	//If right is in the set
+         /* oldchild = beenThere.find(right);
+          if(root.cost + cost < oldchild.cost) {
+            oldchild.cost = root.cost + cost;
+            oldchild.parent = root;
+          }*/
+        }
+        else {
+        	System.out.println("right isn't contained in the set");
+          right.cost = root.cost + cost;
+          right.parent = root;
+          frontier.add(right);
+          beenThere.add(right);
+        }
+      }
+		
 	}
