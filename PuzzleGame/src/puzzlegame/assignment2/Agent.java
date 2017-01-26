@@ -32,12 +32,10 @@ class Agent {
 			UFS ufs = new UFS();
 			Block current;
 			path = ufs.uniform_cost_search(m, startState, goal);
-			System.out.println("UPDATING");
 		
 			while(!path.isEmpty()){
 				current = (Block) path.pop();
 				//current = (Block) path.pop(); 
-				System.out.println("Moving.");
 				current.print();
 				m.setDestination(current.x, current.y);
 			}
@@ -106,7 +104,6 @@ class UFS {
 	    
 	    beenThere.add(startState);
 	    frontier.add(startState);
-	    System.out.println("Starting UFS");
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
 	      //System.out.println("---------");
