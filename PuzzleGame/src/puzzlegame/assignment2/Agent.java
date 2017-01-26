@@ -68,6 +68,17 @@ class UFS {
 	      if(s.x == goal.x && s.y == goal.y)
 	        return s;
 	      
+	      //
+	      //MoveUpRight(); //x+10, y-10;
+	      //MoveRight(); //x+10
+	      //MoveDownRight(); //x+10, y+10
+	      //MoveDown(); //y+10
+	     // MoveDownLeft();//x-10, y+10
+	      //MoveLeft(); //x-10
+	     // MoveUpLeft();//x-10, y-10
+	      //MoveUp(); //y-10
+	      
+	      
 	     /* for(int i = 0; i < )
 	      
 	      
