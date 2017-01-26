@@ -5,6 +5,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
+import java.util.Vector;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics;
 import java.awt.Color;
@@ -25,11 +26,11 @@ class Agent {
 			if(e == null)
 				break;
 			Block startState = new Block(m.getX(),m.getY(),0.0,null);
-			Block goal = new Block(e.getX(),e.getY(),0.0,null);
+			Block goal = new Block(m.getX()+50,m.getY(),0.0,null);
 			UFS ufs = new UFS();
-			ufs.uniform_cost_search(m, startState, goal);
-		
-			//m.setDestination(e.getX(), e.getY());
+			Stack path = ufs.uniform_cost_search(m, startState, goal);
+			System.out.println("UPDATING");
+			m.setDestination(e.getX(), e.getY());
 		}
 	}
 
@@ -92,17 +93,16 @@ class UFS {
 		frontier = new PriorityQueue(costComp);
 		beenThere = new TreeSet<Block>(comp);
 		path = new Stack<Block>();
-	    //Block startState = new Block(Model.getX(),Model.getY(),0.0,null);
-	    //startState.cost = 0.0;
-	    //startState.parent = null;
 	    
 	    beenThere.add(startState);
 	    frontier.add(startState);
 	    System.out.println("Starting UFS");
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
-	      
-	      if(s.x == goal.x || s.y == goal.y){
+	      //System.out.println("---------");
+	      //s.print();
+	      //System.out.println("---------");
+	      if(s.x == goal.x && s.y == goal.y){
 	    	  goal.parent = s;
 	    	  break;
 	      }
@@ -119,13 +119,16 @@ class UFS {
 	    } 
 	    Block current = goal;
 	    while(current!=null){
-	    	path.add(current.parent);
-	    	current = current.parent;	
+	    	//current.print();
+	    	path.add(current);
+	    	current = current.parent;
+	    	
 	    }
 	    
 	    current = (Block) path.pop();
 	    while(!path.isEmpty()){
 	    	current.print();
+	    	current = (Block) path.pop();
 	    }
 	    
 	    return path;
@@ -134,7 +137,7 @@ class UFS {
 
 	private void MoveRight(Model m, Block root) {
 		
-		System.out.println("Moving right.");
+		//System.out.println("Moving right.");
 		float x = (float) (root.x + 10.0);
 		float y = (float) (root.y); //MAY BE TOO SLOW
 		
@@ -143,20 +146,12 @@ class UFS {
 		Block right = new Block(x,y,cost,root);
         Block oldChild;
         
-        if(beenThere.contains(right)) {	//If right is in the set
-         /* oldchild = beenThere.find(right);
-          if(root.cost + cost < oldchild.cost) {
-            oldchild.cost = root.cost + cost;
-            oldchild.parent = root;
-          }*/
+        if(!beenThere.contains(right)) {	//If its not in the set, add it to the set, dont care about cost
+        	frontier.add(right);
+        	beenThere.add(right);
         }
-        else {
-        	System.out.println("right isn't contained in the set");
-          right.cost = root.cost + cost;
-          right.parent = root;
-          frontier.add(right);
-          beenThere.add(right);
-        }
-      }
+        //else if() //but if its in the set with a lower cost..?
+      
+      }//End moveRight
 		
 	}
