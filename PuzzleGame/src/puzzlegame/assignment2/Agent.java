@@ -1,7 +1,8 @@
 package puzzlegame.assignment2;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TreeSet;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Stack;
@@ -28,11 +29,11 @@ class Agent {
 			if(e == null)
 				break;
 			Block startState = new Block(m.getX(),m.getY(),0.0,null);
-			Block goal = new Block(m.getX()+50,m.getY(),0.0,null);
+			Block goal = new Block(m.getX()+100,m.getY()+50,0.0,null);
 			UFS ufs = new UFS();
 			Block current;
 			path = ufs.uniform_cost_search(m, startState, goal);
-		
+			System.out.println("-----------------");
 			while(!path.isEmpty()){
 				current = (Block) path.pop();
 				//current = (Block) path.pop(); 
@@ -91,7 +92,7 @@ class UFS {
 	BlockComparator comp;
 	CostComparator costComp;
 	PriorityQueue frontier;
-	HashSet<Block> beenThere;
+	TreeSet<Block> beenThere;
 	Stack path;
 	
 	  public Stack uniform_cost_search(Model m, Block startState, Block goal) {
@@ -99,7 +100,7 @@ class UFS {
 		comp = new BlockComparator();
 		costComp = new CostComparator();
 		frontier = new PriorityQueue(costComp);
-		beenThere = new HashSet<Block>();
+		beenThere = new TreeSet<Block>(comp);
 		path = new Stack<Block>();
 	    
 	    beenThere.add(startState);
@@ -109,7 +110,7 @@ class UFS {
 	      //System.out.println("---------");
 	      //s.print();
 	      //System.out.println("---------");
-	      if(s.x == goal.x && s.y == goal.y){
+	      if(s.x == goal.x || s.y == goal.y){
 	    	  goal.parent = s;
 	    	  break;
 	      }
@@ -151,14 +152,30 @@ class UFS {
 		float cost = m.getTravelSpeed(x,y) * 10; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 		
 		Block right = new Block(x,y,cost,root);
-       
+		Block oldChild;
         
         if(!beenThere.contains(right)) {	//If its not in the set, add it to the set, dont care about cost
         	frontier.add(right);
         	beenThere.add(right);
         }
-        //else if() //but if its in the set with a lower cost..?
-      
+        else if(beenThere.contains(right)){ //If the new block is already in the set, then we need to checkc ost
+        	oldChild = findNode(right); //find the block with the same x,y
+        	if(root.cost + cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
+                oldChild.cost = root.cost + cost; //new parent
+                oldChild.parent = root;
+              }	
+        }
       }//End moveRight
 		
+	 public Block findNode(Block block) {  
+	        Iterator<Block> iterator = beenThere.iterator();
+	        while(iterator.hasNext()) {
+	            Block node = iterator.next();
+	            if(node.x == block.x && node.y == block.y)             
+	                return node;
+	        }
+
+	        return null;                
+	    }
+	
 	}
