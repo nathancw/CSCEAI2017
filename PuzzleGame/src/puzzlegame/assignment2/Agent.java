@@ -38,7 +38,7 @@ class Agent {
 		
 		Controller c = m.getController();
 		accum++;
-		if(accum == 20){
+		if(accum == 5){
 		
 			if(!path.isEmpty()){
 				current = (Block) path.pop();
@@ -147,7 +147,7 @@ class UFS {
 	      //MoveDownRight(m,s); //x+10, y+10
 	      MoveDown(m,s); //y+10
 	      //MoveDownLeft(m,s);//x-10, y+10
-	      //MoveLeft(m,s); //x-10
+	      MoveLeft(m,s); //x-10
 	      //MoveUpLeft(m,s);//x-10, y-10
 	      //MoveUp(m,s); //y-10
 	     
@@ -192,7 +192,7 @@ class UFS {
 		        oldChild.parent = root;
 		      }	
 		}
-
+	
 		
 	}
 
