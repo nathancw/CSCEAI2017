@@ -13,13 +13,14 @@ import java.awt.Color;
 
 class Agent {
 	Stack path = new Stack<Block>();
+	int accum = 0;
+	Block current;
 	
 	void drawPlan(Graphics g, Model m) {
 		g.setColor(Color.red);
-		g.drawLine((int)m.getX(), (int)m.getY(), (int)m.getX()+300, (int)m.getY()+300);
-		g.fillOval((int)m.getX(), (int)m.getY(), (int)m.getX()+5, (int)m.getY()+5);
-		Block current;
-		while(!path.isEmpty()){
+		g.fillOval(500, 500, 10, 10);
+		//g.fillOval((int)m.getX(), (int)m.getY(), (int)m.getX()+5, (int)m.getY()+5);
+		/*while(!path.isEmpty()){
 			current = (Block) path.pop();
 			//current = (Block) path.pop(); 
 			System.out.println("POPPING OFF");
@@ -27,8 +28,8 @@ class Agent {
 			g.fillOval((int)current.x,(int)current.y,200,200);
 			g.drawLine((int)m.getX(), (int)m.getY(), (int)(m.getX()+current.x), (int)(m.getY()+current.y));
 		} 
-		
-		g.setColor(Color.red);
+		*/
+
 		
 	}
 
@@ -36,9 +37,21 @@ class Agent {
 	{
 		
 		Controller c = m.getController();
-	
+		accum++;
+		if(accum == 20){
 		
-		//System.out.println("UDPATING");
+			if(!path.isEmpty()){
+				current = (Block) path.pop();
+				System.out.println("Setting dest");
+				current.print();
+				System.out.println("Setting dest to " + current.x + " ," + current.y);
+				m.setDestination(current.x, current.y);
+			}
+			accum = 0;
+		}
+		
+		
+		//System.out.println("UDPATING" + accum);
 		while(true)
 		{
 			MouseEvent e = c.nextMouseEvent();
@@ -48,19 +61,11 @@ class Agent {
 			
 			Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
 			UFS ufs = new UFS();
-			Block goal = new Block(m.getX()+300,m.getY()+300,(float) 0.0,null);
+			Block goal = new Block(m.getX()+400,m.getY()+400,(float) 0.0,null);
 			path = ufs.uniform_cost_search(m, startState, goal);
 			
-			/*System.out.println("-----------------");
-			Block current;
-			while(!path.isEmpty()){
-				current = (Block) path.pop();
-				//current = (Block) path.pop(); 
-				current.print();
-				//m.setDestination(current.x, current.y);
-			} */
-			
 		}
+		
 		
 	
 	}
