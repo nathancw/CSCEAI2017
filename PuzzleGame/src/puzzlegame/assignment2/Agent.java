@@ -47,7 +47,7 @@ class Agent {
 			
 			Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
 			UFS ufs = new UFS();
-			Block goal = new Block(m.getX()+200,m.getY()+300,(float) 0.0,null);
+			Block goal = new Block(m.getX()+230,m.getY()+250,(float) 0.0,null);
 			path = ufs.uniform_cost_search(m, startState, goal);
 			
 		}
@@ -130,9 +130,9 @@ class UFS {
 	      //MoveDownRight(m,s); //x+10, y+10
 	      MoveDown(m,s); //y+10
 	      //MoveDownLeft(m,s);//x-10, y+10
-	    //  MoveLeft(m,s); //x-10
+	      MoveLeft(m,s); //x-10
 	      //MoveUpLeft(m,s);//x-10, y-10
-	     // MoveUp(m,s); //y-10
+	      MoveUp(m,s); //y-10
 	     
 	    } 
 	    
@@ -160,23 +160,25 @@ class UFS {
 		
 		if(y>0){ //if we aren't off top of the map
 			
-			float cost = m.getTravelSpeed(x,y) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
 			
+			//System.out.println("beenthere contains child? :" + beenThere.contains(child) + " x : " + child.x + " y : " + child.y );
 			
-			if(!beenThere.contains(child)) {	//If its not in the set, add it to the set, dont care about cost
-				frontier.add(child);
-				//beenThere.add(child);
-			}
-		/*	else if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = findNode(child); //find the block with the same x,y
+			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
+				oldChild = beenThere.floor(child); //find the block with the same x,y
+				//System.out.println("Right. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
 				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
 			        oldChild.cost =  cost; //new parent
 			        oldChild.parent = root;
 			      }	
-			} */
+			}
+			else {	//If its not in the set, add it to the set, dont care about cost
+				frontier.add(child);
+				beenThere.add(child);
+			}
 	
 		}
 		
@@ -190,23 +192,25 @@ class UFS {
 		
 		if(x>0){ //if we aren't too far to the left
 			
-			float cost = m.getTravelSpeed(x,y) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
 			
+			//System.out.println("beenthere contains child? :" + beenThere.contains(child) + " x : " + child.x + " y : " + child.y );
 			
-			if(!beenThere.contains(child)) {	//If its not in the set, add it to the set, dont care about cost
-				frontier.add(child);
-				//beenThere.add(child);
-			}
-			/*else if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = findNode(child); //find the block with the same x,y
+			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
+				oldChild = beenThere.floor(child); //find the block with the same x,y
+				//System.out.println("Right. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
 				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
 			        oldChild.cost =  cost; //new parent
 			        oldChild.parent = root;
 			      }	
-			} */
+			}
+			else {	//If its not in the set, add it to the set, dont care about cost
+				frontier.add(child);
+				beenThere.add(child);
+			}
 		}
 	
 	}
