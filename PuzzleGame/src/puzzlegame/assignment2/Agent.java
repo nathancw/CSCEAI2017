@@ -47,7 +47,7 @@ class Agent {
 			
 			Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
 			UFS ufs = new UFS();
-			Block goal = new Block(m.getX()+230,m.getY()+250,(float) 0.0,null);
+			Block goal = new Block(m.getX()+450,m.getY()-80,(float) 0.0,null);
 			path = ufs.uniform_cost_search(m, startState, goal);
 			
 		}
@@ -81,10 +81,16 @@ class BlockComparator implements Comparator<Block>
 {
 	public int compare(Block a, Block b)
 	{
-		if((a.x == b.x) && (a.y == b.y))
-			return 0;
-
-		return -1;
+		if(a.x > b.x)
+				return -1;
+		else if(a.y > b.y)
+			return -1;
+		else if(a.y < b.y) 
+				return 1;
+		else if(a.x < b.x)
+			return 1;
+	
+		return 0;
 	}
 }  
 class CostComparator implements Comparator<Block>
@@ -102,18 +108,19 @@ class CostComparator implements Comparator<Block>
 class UFS {
 	BlockComparator comp;
 	CostComparator costComp;
-	PriorityQueue frontier;
+	PriorityQueue<Block> frontier;
 	TreeSet<Block> beenThere;
-	Stack path;
+	Stack<Block> path;
 	
-	  public Stack uniform_cost_search(Model m, Block startState, Block goal) {
+	  public Stack<Block> uniform_cost_search(Model m, Block startState, Block goal) {
 		boolean found = false;
 		comp = new BlockComparator();
 		costComp = new CostComparator();
-		frontier = new PriorityQueue(costComp);
+		frontier = new PriorityQueue<Block>(costComp);
 		beenThere = new TreeSet<Block>(comp);
 		path = new Stack<Block>();
 	    frontier.add(startState);
+	    beenThere.add(startState);
 	    
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
@@ -164,18 +171,17 @@ class UFS {
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
-			
-			//System.out.println("beenthere contains child? :" + beenThere.contains(child) + " x : " + child.x + " y : " + child.y );
-			
+		
 			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
 				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Right. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
+				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
 				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
 			        oldChild.cost =  cost; //new parent
 			        oldChild.parent = root;
 			      }	
 			}
 			else {	//If its not in the set, add it to the set, dont care about cost
+				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
 			}
@@ -196,18 +202,17 @@ class UFS {
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
-			
-			//System.out.println("beenthere contains child? :" + beenThere.contains(child) + " x : " + child.x + " y : " + child.y );
-			
+		
 			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
 				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Right. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
+				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
 				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
 			        oldChild.cost =  cost; //new parent
 			        oldChild.parent = root;
 			      }	
 			}
 			else {	//If its not in the set, add it to the set, dont care about cost
+				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
 			}
@@ -228,13 +233,14 @@ class UFS {
 		
 			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
 				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Right. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
+				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
 				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
 			        oldChild.cost =  cost; //new parent
 			        oldChild.parent = root;
 			      }	
 			}
 			else {	//If its not in the set, add it to the set, dont care about cost
+				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
 			}
@@ -265,6 +271,7 @@ class UFS {
 			      }	
 			}
 			else {	//If its not in the set, add it to the set, dont care about cost
+				//System.out.println("Right. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
 			}
