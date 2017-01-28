@@ -126,7 +126,7 @@ class Model {
 	public void emptyDestinations(){
 		index = 0;
 		visited = new ArrayList<State>();
-		destinations = new State[60];
+		destinations = new State[200];
 	}
 	public int getDestNum(){
 		return index;

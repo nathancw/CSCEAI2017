@@ -27,6 +27,7 @@ class Agent {
 				g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
 			}
 		//}
+			g.setColor(Color.black);
 		for(int x = 0; x < i-1; x++){
 			//if( x == 0)
 			//	g.drawLine((int)m.getX(), (int)m.getY(),dest[x+1].x,dest[x+1].y);
