@@ -5,10 +5,21 @@ package puzzlegame.assignment2;
 import java.awt.Graphics;
 import java.io.File;
 import java.util.Random;
+import java.util.Stack;
 import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import javax.imageio.ImageIO;
+
+class State{
+	int x;
+	int y;
+	
+	public State(int x, int y){
+		this.x = x;
+		this.y = y;
+	}
+}
 
 class Model {
 	public static final float EPSILON = 0.0001f; // A small number
@@ -18,6 +29,8 @@ class Model {
 	private Controller controller;
 	private byte[] terrain;
 	private ArrayList<Sprite> sprites;
+	State destinations[];
+	int index = 0;
 
 	Model(Controller c) {
 		this.controller = c;
@@ -66,6 +79,8 @@ class Model {
 
 	void setDestination(float x, float y) {
 		Sprite s = sprites.get(0);
+		destinations[index] = new State((int) x, (int) y);
+		index++;
 		s.xDestination = x;
 		s.yDestination = y;
 	}
@@ -101,5 +116,17 @@ class Model {
 			this.x = Math.max(0.0f, Math.min(XMAX, this.x));
 			this.y = Math.max(0.0f, Math.min(YMAX, this.y));
 		}
+	}
+	
+	public State[] getDestinations(){
+		return destinations;
+	}
+	
+	public void emptyDestinations(){
+		index = 0;
+		destinations = new State[60];
+	}
+	public int getDestNum(){
+		return index;
 	}
 }
