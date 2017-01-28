@@ -20,7 +20,13 @@ class Agent {
 		g.setColor(Color.red);
 		int i = m.getDestNum();
 		State[] dest = m.getDestinations();
-		
+		ArrayList<State> visited = m.getVisited();
+	
+		//if(!visited.isEmpty()){
+			for(int in = 0; in < visited.size(); in++){
+				g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
+			}
+		//}
 		for(int x = 0; x < i-1; x++){
 			//if( x == 0)
 			//	g.drawLine((int)m.getX(), (int)m.getY(),dest[x+1].x,dest[x+1].y);
@@ -53,14 +59,14 @@ class Agent {
 			
 			if(e == null)
 				break;
-			
+			m.emptyDestinations();
 			Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
 			UFS ufs = new UFS();
 			int x = (e.getX()/10)*10;
 			int y = (e.getY()/10)*10;
 			Block goal = new Block(x,y,(float) 0.0,null);
 			path = ufs.uniform_cost_search(m, startState, goal);
-			m.emptyDestinations();
+			
 			
 		}
 	}
@@ -136,6 +142,8 @@ class UFS {
 	    
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
+	      m.setVisited((int)s.x,(int)s.y);
+	      
 	      //s.print();
 	      if(s.x == goal.x && s.y == goal.y){
 	    	  System.out.println("Found dest");

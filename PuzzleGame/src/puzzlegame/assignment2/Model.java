@@ -30,6 +30,7 @@ class Model {
 	private byte[] terrain;
 	private ArrayList<Sprite> sprites;
 	State destinations[];
+	ArrayList<State> visited;
 	int index = 0;
 
 	Model(Controller c) {
@@ -38,7 +39,7 @@ class Model {
 
 	void initGame() throws Exception {
 
-	    
+	    visited = new ArrayList<State>();
 		BufferedImage bufferedImage = ImageIO.read(new File("terrain.png"));
 		if(bufferedImage.getWidth() != 60 || bufferedImage.getHeight() != 60)
 			throw new Exception("Expected the terrain image to have dimensions of 60-by-60");
@@ -124,9 +125,19 @@ class Model {
 	
 	public void emptyDestinations(){
 		index = 0;
+		visited = new ArrayList<State>();
 		destinations = new State[60];
 	}
 	public int getDestNum(){
 		return index;
+	}
+	
+	public void setVisited(int x, int y){
+		visited.add(new State(x,y));
+	}
+
+	public ArrayList<State> getVisited() {
+
+		return visited;
 	}
 }
