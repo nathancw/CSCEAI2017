@@ -4,6 +4,9 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.TreeSet;
+
+import javax.swing.SwingUtilities;
+
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Stack;
@@ -16,23 +19,22 @@ class Agent {
 	int accum = 0;
 	Block current;
 	int destinations[][] = new int[80][80];
+	float heuristic = 5;
+	boolean heuristicFound = false;
+	
 	void drawPlan(Graphics g, Model m) {
 		g.setColor(Color.red);
 		int i = m.getDestNum();
 		State[] dest = m.getDestinations();
 		ArrayList<State> visited = m.getVisited();
-	
-		//if(!visited.isEmpty()){
-			for(int in = 0; in < visited.size(); in++){
-				g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
-			}
-		//}
-			g.setColor(Color.black);
+
+		for(int in = 0; in < visited.size(); in++){
+			g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
+		}
+			
+		g.setColor(Color.black);
 		for(int x = 0; x < i-1; x++){
-			//if( x == 0)
-			//	g.drawLine((int)m.getX(), (int)m.getY(),dest[x+1].x,dest[x+1].y);
-			//else
-				g.drawLine(dest[x].x,dest[x].y, dest[x+1].x,dest[x+1].y);
+			g.drawLine(dest[x].x,dest[x].y, dest[x+1].x,dest[x+1].y);
 		}
 		
 	}
@@ -45,31 +47,61 @@ class Agent {
 			
 			if(!path.isEmpty()){
 				current = (Block) path.pop();
-				//System.out.println("Setting dest");
-				//current.print();
-				//System.out.println("Setting dest to " + current.x + " ," + current.y);
 				m.setDestination(current.x, current.y);
 			}
 			accum = 0;
 		}
-		
-		//System.out.println("UDPATING" + accum);
+
 		while(true)
 		{
 			MouseEvent e = c.nextMouseEvent();
 			
 			if(e == null)
 				break;
-			m.emptyDestinations();
-			Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
-			UFS ufs = new UFS();
-			int x = (e.getX()/10)*10;
-			int y = (e.getY()/10)*10;
-			Block goal = new Block(x,y,(float) 0.0,null);
-			path = ufs.uniform_cost_search(m, startState, goal);
-			
+			else if(SwingUtilities.isLeftMouseButton(e)){
+				
+				m.emptyDestinations();
+				Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
+				UFS ufs = new UFS(false,(float)0.0);
+				int x = (e.getX()/10)*10;
+				int y = (e.getY()/10)*10;
+				Block goal = new Block(x,y,(float) 0.0,null);
+				
+				//Do UFS with no A*
+				path = ufs.uniform_cost_search(m, startState, goal);
+			}
+			else if(SwingUtilities.isRightMouseButton(e)){
+				System.out.println("Doing A* Search");
+				if(!heuristicFound)
+				calculateHeuristic(m);
+				
+				m.emptyDestinations();
+				Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
+				UFS ufs = new UFS(true, heuristic);
+				System.out.println("Clicked: " + e.getX() + "," + e.getY());
+				int x = (e.getX()/10)*10;
+				int y = (e.getY()/10)*10;
+				System.out.println("New values: " + x + "," + y);
+				Block goal = new Block(x,y,(float) 0.0,null);
+				
+				//Do UFS with A*
+				path = ufs.uniform_cost_search(m, startState, goal);
+			}
 			
 		}
+	}
+
+	private void calculateHeuristic(Model m) {
+		
+		float temp;
+		for(int x = 0; x < 1200; x+=10)
+			for(int y =0; y < 600; y+=10){
+				temp = 1/(m.getTravelSpeed(x,y)*10);
+				if(temp < heuristic)
+					heuristic = temp;
+			}
+		heuristicFound = true;
+		System.out.println("Using Heuristic value of: " + heuristic);
 	}
 
 	public static void main(String[] args) throws Exception
@@ -130,6 +162,13 @@ class UFS {
 	PriorityQueue<Block> frontier;
 	TreeSet<Block> beenThere;
 	Stack<Block> path;
+	boolean aStar;
+	float heuristic;
+	
+	public UFS(boolean a, float h){
+		this.aStar = a;
+		this.heuristic = h;
+	}
 	
 	  public Stack<Block> uniform_cost_search(Model m, Block startState, Block goal) {
 		boolean found = false;
@@ -188,6 +227,9 @@ class UFS {
 		if(x > 0 && y > 0){
 			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
+			if(aStar)
+				cost = cost - heuristic;
+			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
 		
@@ -213,6 +255,9 @@ class UFS {
 		
 		if(x > 0 && y < 599){
 			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			
+			if(aStar)
+				cost = cost - heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
@@ -241,6 +286,9 @@ class UFS {
 		if(x < 1199 && y < 599){
 			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
+			if(aStar)
+				cost = cost - heuristic;
+			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
 		
@@ -267,6 +315,9 @@ class UFS {
 		
 		if(x<1100 && y > 0){
 			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			
+			if(aStar)
+				cost = cost - heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
@@ -295,6 +346,8 @@ class UFS {
 		
 		if(y > 0){
 			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			if(aStar)
+				cost = cost - heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
@@ -322,6 +375,8 @@ class UFS {
 		
 		if(x > 0){
 			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			if(aStar)
+				cost = cost - heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
@@ -350,6 +405,8 @@ class UFS {
 		
 		if(y < 599){
 			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			if(aStar)
+				cost = cost - heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
@@ -379,6 +436,8 @@ class UFS {
 		
 		if(x < 1199){
 			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			if(aStar)
+				cost = cost - heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
