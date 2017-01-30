@@ -43,7 +43,7 @@ class Agent {
 	{
 		Controller c = m.getController();
 		accum++;
-		if(accum == 5){
+		if(accum == 8){
 			
 			if(!path.isEmpty()){
 				current = (Block) path.pop();
