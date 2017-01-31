@@ -7,6 +7,8 @@ import java.util.TreeSet;
 
 import javax.swing.SwingUtilities;
 
+import org.omg.CORBA.SystemException;
+
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Stack;
@@ -27,7 +29,7 @@ class Agent {
 		int i = m.getDestNum();
 		State[] dest = m.getDestinations();
 		ArrayList<State> visited = m.getVisited();
-
+		//System.out.println("ArrayList size:" + visited.size());
 		for(int in = 0; in < visited.size(); in++){
 			g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
 		}
@@ -35,6 +37,7 @@ class Agent {
 		g.setColor(Color.black);
 		for(int x = 0; x < i-1; x++){
 			g.drawLine(dest[x].x,dest[x].y, dest[x+1].x,dest[x+1].y);
+			
 		}
 		
 	}
@@ -43,10 +46,11 @@ class Agent {
 	{
 		Controller c = m.getController();
 		accum++;
-		if(accum == 8){
+		if(accum == 7){
 			
 			if(!path.isEmpty()){
 				current = (Block) path.pop();
+			//	current.print();
 				m.setDestination(current.x, current.y);
 			}
 			accum = 0;
@@ -66,7 +70,7 @@ class Agent {
 				int x = (e.getX()/10)*10;
 				int y = (e.getY()/10)*10;
 				Block goal = new Block(x,y,(float) 0.0,null);
-				
+				//Block goal = new Block(m.getX()+1020,m.getY()+290,(float) 0.0,null);
 				//Do UFS with no A*
 				path = ufs.uniform_cost_search(m, startState, goal);
 			}
@@ -96,7 +100,7 @@ class Agent {
 		float temp;
 		for(int x = 0; x < 1200; x+=10)
 			for(int y =0; y < 600; y+=10){
-				temp = 1/(m.getTravelSpeed(x,y)*10);
+				temp = 10/(m.getTravelSpeed(x,y));
 				if(temp < heuristic)
 					heuristic = temp;
 			}
@@ -132,18 +136,22 @@ class BlockComparator implements Comparator<Block>
 {
 	public int compare(Block a, Block b)
 	{
-		if(a.x > b.x)
-				return -1;
-		else if(a.y > b.y)
-			return -1;
-		else if(a.y < b.y) 
-				return 1;
-		else if(a.x < b.x)
-			return 1;
-	
-		return 0;
+		
+		  Float x1 = a.x;
+	        Float x2 = b.x;
+	        int floatCompare1 = x1.compareTo(x2);
+
+	        if (floatCompare1 != 0) {
+	            return floatCompare1;
+	        } else {
+	            Float y1 = a.y;
+	            Float y2 = b.y;
+	            return y1.compareTo(y2);
+	        }
+	    }
+		
+		
 	}
-}  
 class CostComparator implements Comparator<Block>
 {
 	public int compare(Block a, Block b)
@@ -182,7 +190,6 @@ class UFS {
 	    
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
-	      m.setVisited((int)s.x,(int)s.y);
 	      
 	      //s.print();
 	      if(s.x == goal.x && s.y == goal.y){
@@ -208,6 +215,8 @@ class UFS {
 	    	return new Stack();
 	    }
 	    
+	    System.out.println("TreeeSet size: " + beenThere.size());
+	    
 	    Block current = goal;
 	    while(current!=null){
 	    	//current.print();
@@ -225,7 +234,7 @@ class UFS {
 		float y = (float) (root.y-10); //MAY BE TOO SLOW
 			
 		if(x > 0 && y > 0){
-			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
 			if(aStar)
 				cost = cost - heuristic;
@@ -245,6 +254,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 		}
 	}
@@ -254,7 +264,7 @@ class UFS {
 		float y = (float) (root.y+10); //MAY BE TOO SLOW
 		
 		if(x > 0 && y < 599){
-			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
 			if(aStar)
 				cost = cost - heuristic;
@@ -274,6 +284,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 		}
 		
@@ -284,7 +295,7 @@ class UFS {
 		float y = (float) (root.y+10); //MAY BE TOO SLOW
 		
 		if(x < 1199 && y < 599){
-			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
 			if(aStar)
 				cost = cost - heuristic;
@@ -304,6 +315,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}	
 		}
 		
@@ -314,7 +326,7 @@ class UFS {
 		float y = (float) (root.y-10); //MAY BE TOO SLOW
 		
 		if(x<1100 && y > 0){
-			float cost = (float) ((1/(m.getTravelSpeed(x,y)*(10*Math.sqrt(2)))) + root.cost); //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
 			
 			if(aStar)
 				cost = cost - heuristic;
@@ -334,6 +346,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 	}
 		
@@ -345,7 +358,7 @@ class UFS {
 		float y = (float) (root.y-10); //MAY BE TOO SLOW
 		
 		if(y > 0){
-			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			if(aStar)
 				cost = cost - heuristic;
 			
@@ -364,6 +377,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 		}
 	}
@@ -374,7 +388,7 @@ class UFS {
 		float y = (float) (root.y); //MAY BE TOO SLOW
 		
 		if(x > 0){
-			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			if(aStar)
 				cost = cost - heuristic;
 			
@@ -393,6 +407,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 		}
 	
@@ -404,7 +419,7 @@ class UFS {
 		float y = (float) (root.y+10); //MAY BE TOO SLOW
 		
 		if(y < 599){
-			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
 			if(aStar)
 				cost = cost - heuristic;
 			
@@ -423,6 +438,7 @@ class UFS {
 				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 		}
 
@@ -435,7 +451,7 @@ class UFS {
 		float y = (float) (root.y); //MAY BE TOO SLOW
 		
 		if(x < 1199){
-			float cost = (1/(m.getTravelSpeed(x,y)*10)) + root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
 			if(aStar)
 				cost = cost - heuristic;
 			
@@ -456,6 +472,7 @@ class UFS {
 				//System.out.println("Right. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
+				m.setVisited((int)child.x,(int)child.y);
 			}
 		}
 

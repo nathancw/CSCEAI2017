@@ -125,7 +125,8 @@ class Model {
 	
 	public void emptyDestinations(){
 		index = 0;
-		visited = new ArrayList<State>();
+		visited.clear();
+		//visited = new ArrayList<State>();
 		destinations = new State[200];
 	}
 	public int getDestNum(){
