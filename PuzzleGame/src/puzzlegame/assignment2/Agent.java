@@ -472,7 +472,7 @@ class UFS {
 				//System.out.println("Right. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
+				m.setVisited((int)child.x, (int)child.y);
 			}
 		}
 
