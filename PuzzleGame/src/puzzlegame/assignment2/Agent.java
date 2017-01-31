@@ -199,14 +199,14 @@ class UFS {
 	    	  break;
 	      }
 	      //
-	      MoveUpRight(m,s); //x+10, y-10;
-	      MoveRight(m,s); //x+10
-	      MoveDownRight(m,s); //x+10, y+10
-	      MoveDown(m,s); //y+10
-	      MoveDownLeft(m,s);//x-10, y+10
-	      MoveLeft(m,s); //x-10
-	      MoveUpLeft(m,s);//x-10, y-10
-	      MoveUp(m,s); //y-10
+	      MoveState(m,s,10,-10); //x+10, y-10;
+	      MoveState(m,s,10,0); //x+10
+	      MoveState(m,s,10,10); //x+10, y+10
+	      MoveState(m,s,0,10); //y+10
+	      MoveState(m,s,-10,10);//x-10, y+10
+	      MoveState(m,s,-10,0); //x-10
+	      MoveState(m,s,-10,-10);//x-10, y-10
+	      MoveState(m,s,0,-10); //y-10
 	     
 	    } 
 	    
@@ -229,12 +229,17 @@ class UFS {
 	    //throw new RuntimeException("There is no path to the goal");
 	  }
 
-	private void MoveUpLeft(Model m, Block root) {
-		float x = (float) (root.x-10);
-		float y = (float) (root.y-10); //MAY BE TOO SLOW
+	private void MoveState(Model m, Block root, float xMove, float yMove) {
+		float x = (float) (root.x+xMove);
+		float y = (float) (root.y+yMove);
+		
+		if(x < 1199 && y < 599 && y > 0 && x > 0){
 			
-		if(x > 0 && y > 0){
-			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
+			float cost;
+			if((Math.abs(xMove) + Math.abs(yMove))==20)
+				cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
+			else
+				cost =  (float)(10/(m.getTravelSpeed(x,y)))+ root.cost;
 			
 			if(aStar)
 				cost = cost - heuristic;
@@ -244,75 +249,12 @@ class UFS {
 		
 			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
 				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
 				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
 			        oldChild.cost =  cost; //new parent
 			        oldChild.parent = root;
 			      }	
 			}
 			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
-			}
-		}
-	}
-
-	private void MoveDownLeft(Model m, Block root) {
-		float x = (float) (root.x-10);
-		float y = (float) (root.y+10); //MAY BE TOO SLOW
-		
-		if(x > 0 && y < 599){
-			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
-			
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-		
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
-			}
-		}
-		
-	}
-
-	private void MoveDownRight(Model m, Block root) {
-		float x = (float) (root.x+10);
-		float y = (float) (root.y+10); //MAY BE TOO SLOW
-		
-		if(x < 1199 && y < 599){
-			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
-			
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-		
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
 				frontier.add(child);
 				beenThere.add(child);
 				m.setVisited((int)child.x,(int)child.y);
@@ -321,161 +263,5 @@ class UFS {
 		
 	}
 
-	private void MoveUpRight(Model m, Block root) {
-		float x = (float) (root.x+10);
-		float y = (float) (root.y-10); //MAY BE TOO SLOW
-		
-		if(x<1100 && y > 0){
-			float cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
-			
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-		
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
-			}
-	}
-		
-	}
-
-	private void MoveUp(Model m, Block root) {
-		
-		float x = (float) (root.x);
-		float y = (float) (root.y-10); //MAY BE TOO SLOW
-		
-		if(y > 0){
-			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-		
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
-			}
-		}
-	}
-
-	private void MoveLeft(Model m, Block root) {
-		
-		float x = (float) (root.x-10);
-		float y = (float) (root.y); //MAY BE TOO SLOW
-		
-		if(x > 0){
-			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-		
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
-			}
-		}
-	
-	}
-
-	private void MoveDown(Model m, Block root) {
-		//System.out.println("Moving down.");
-		float x = (float) (root.x);
-		float y = (float) (root.y+10); //MAY BE TOO SLOW
-		
-		if(y < 599){
-			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost; //Cost is speed associated with the terrain square AND distance you will travel at that speed
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-		
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Down. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Down. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
-			}
-		}
-
-	}
-
-	private void MoveRight(Model m, Block root) {
-		
-		//System.out.println("Moving down.");
-		float x = (float) (root.x+10);
-		float y = (float) (root.y); //MAY BE TOO SLOW
-		
-		if(x < 1199){
-			float cost = (float)(10/(m.getTravelSpeed(x,y)))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
-			if(aStar)
-				cost = cost - heuristic;
-			
-			Block child = new Block(x,y,cost,root);
-			Block oldChild;
-			
-			//System.out.println("beenthere contains child? :" + beenThere.contains(child) + " x : " + child.x + " y : " + child.y );
-			
-			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
-				oldChild = beenThere.floor(child); //find the block with the same x,y
-				//System.out.println("Right. Found : " + x + "," + y + " already in beenThere. oldChildCost: " + oldChild.x + "," + oldChild.y + " newChild: " + child.x + "," + child.y);
-				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
-			        oldChild.cost =  cost; //new parent
-			        oldChild.parent = root;
-			      }	
-			}
-			else {	//If its not in the set, add it to the set, dont care about cost
-				//System.out.println("Right. Adding: x : " + child.x + " y : " + child.y );
-				frontier.add(child);
-				beenThere.add(child);
-				m.setVisited((int)child.x, (int)child.y);
-			}
-		}
-
-      }//End moveRight
 }
 		
