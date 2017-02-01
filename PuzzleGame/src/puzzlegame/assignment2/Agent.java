@@ -56,17 +56,13 @@ class Agent {
 		{
 			MouseEvent e = c.nextMouseEvent();	
 			
-			//if(m.getX()!=  goal.x && m.getY()!=goal.y)
 			if(searching && m.getX() == m.getDestinationX() && m.getY() == m.getDestinationY()){
 				
 					UFS ufs = new UFS(false,(float)0.0);
 					Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
 					path = ufs.uniform_cost_search(m, startState, goal);
-					System.out.println("dest: " + m.getDestinationX() + " y: " + m.getDestinationY());
-					//goal.print();
 					Block current = (Block) path.pop();
 					current = (Block) path.pop(); //Pop twice to get second
-					//System.out.print("Current: "); current.print();
 					
 					if(m.getX() == goal.x && m.getY() == goal.y)
 						searching = false;
