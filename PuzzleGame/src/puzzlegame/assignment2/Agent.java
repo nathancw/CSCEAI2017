@@ -23,15 +23,15 @@ class Agent {
 	int destinations[][] = new int[80][80];
 	float heuristic = 5;
 	boolean heuristicFound = false;
-	Block goal = null;
-	boolean newGoal = false;
+	Block goal = new Block((float)100,(float)100,(float)0,null);
+	boolean searching = false;
 	
 	void drawPlan(Graphics g, Model m) {
 		g.setColor(Color.red);
 		int i = m.getDestNum();
 		State[] dest = m.getDestinations();
 		ArrayList<State> visited = m.getVisited();
-		//System.out.println("ArrayList size:" + visited.size());
+		
 		for(int in = 0; in < visited.size(); in++){
 			g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
 		}
@@ -47,45 +47,54 @@ class Agent {
 	void update(Model m)
 	{
 		Controller c = m.getController();	
-		if(!path.isEmpty()){
+		/*if(!path.isEmpty()){
 			current = (Block) path.pop();
 			m.setDestination(current.x, current.y);
 		}
-
+		*/
 		while(true)
 		{
 			MouseEvent e = c.nextMouseEvent();	
 			
-			if(m.getX() == m.getDestinationX() && m.getY() == m.getDestinationY()){
+			//if(m.getX()!=  goal.x && m.getY()!=goal.y)
+			if(searching && m.getX() == m.getDestinationX() && m.getY() == m.getDestinationY()){
 				
 					UFS ufs = new UFS(false,(float)0.0);
 					Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
-					if(goal ==null)
-						break;
 					path = ufs.uniform_cost_search(m, startState, goal);
-					
+					System.out.println("dest: " + m.getDestinationX() + " y: " + m.getDestinationY());
+					//goal.print();
 					Block current = (Block) path.pop();
+					current = (Block) path.pop(); //Pop twice to get second
+					//System.out.print("Current: "); current.print();
+					
+					if(m.getX() == goal.x && m.getY() == goal.y)
+						searching = false;
+					
 					m.setDestination((float)current.x, (float)current.y);
 				
 			}
 			
-			if(SwingUtilities.isLeftMouseButton(e)){
-				
-				m.emptyDestinations();
-				int x = (e.getX()/10)*10;
-				int y = (e.getY()/10)*10;
-				goal = new Block(x,y,(float) 0.0,null);
-				newGoal = true;
+			if(e !=null){
+				if(SwingUtilities.isLeftMouseButton(e)){
+					
+					m.emptyDestinations();
+					int x = (e.getX()/10)*10;
+					int y = (e.getY()/10)*10;
+					goal = new Block(x,y,(float) 0.0,null);
+					searching = true;
+				}
+				else if(SwingUtilities.isRightMouseButton(e)){
+					System.out.println("Doing A* Search");
+					if(!heuristicFound)
+					calculateHeuristic(m);
+					m.emptyDestinations();
+					int x = (e.getX()/10)*10;
+					int y = (e.getY()/10)*10;
+				}
 			}
-			else if(SwingUtilities.isRightMouseButton(e)){
-				System.out.println("Doing A* Search");
-				if(!heuristicFound)
-				calculateHeuristic(m);
-				m.emptyDestinations();
-				int x = (e.getX()/10)*10;
-				int y = (e.getY()/10)*10;
-			}
-			
+			else
+				break;
 			
 		}
 	}
@@ -188,7 +197,7 @@ class UFS {
 	      
 	      //s.print();
 	      if(s.x == goal.x && s.y == goal.y){
-	    	  System.out.println("Found dest");
+	    	  //System.out.println("Found dest");
 	    	  goal.parent = s;
 	    	  found = true;
 	    	  break;
@@ -210,7 +219,12 @@ class UFS {
 	    	return new Stack();
 	    }
 	    
-	    System.out.println("TreeeSet size: " + beenThere.size());
+	    //System.out.println("TreeeSet size: " + beenThere.size());
+	    
+	    for (Block e : frontier) {
+	    	m.setVisited((int)e.x,(int)e.y);
+	    }
+	    
 	    
 	    Block current = goal;
 	    while(current!=null){
@@ -224,6 +238,10 @@ class UFS {
 	    //throw new RuntimeException("There is no path to the goal");
 	  }
 
+	public PriorityQueue<Block> getFrontier(){
+		return frontier;
+	}
+	  
 	private void MoveState(Model m, Block root, float xMove, float yMove) {
 		float x = (float) (root.x+xMove);
 		float y = (float) (root.y+yMove);
@@ -252,7 +270,6 @@ class UFS {
 			else {	//If its not in the set, add it to the set, dont care about cost
 				frontier.add(child);
 				beenThere.add(child);
-				m.setVisited((int)child.x,(int)child.y);
 			}	
 		}
 		
