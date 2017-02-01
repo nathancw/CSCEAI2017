@@ -1,16 +1,9 @@
 package puzzlegame.assignment2;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.TreeSet;
-
 import javax.swing.SwingUtilities;
-
-import org.omg.CORBA.SystemException;
-
 import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.Stack;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics;
@@ -47,11 +40,7 @@ class Agent {
 	void update(Model m)
 	{
 		Controller c = m.getController();	
-		/*if(!path.isEmpty()){
-			current = (Block) path.pop();
-			m.setDestination(current.x, current.y);
-		}
-		*/
+
 		while(true)
 		{
 			MouseEvent e = c.nextMouseEvent();	
@@ -75,6 +64,7 @@ class Agent {
 				if(SwingUtilities.isLeftMouseButton(e)){
 					
 					m.emptyDestinations();
+					m.visited.clear();
 					int x = (e.getX()/10)*10;
 					int y = (e.getY()/10)*10;
 					goal = new Block(x,y,(float) 0.0,null);
@@ -85,8 +75,12 @@ class Agent {
 					if(!heuristicFound)
 					calculateHeuristic(m);
 					m.emptyDestinations();
+					m.visited.clear();
 					int x = (e.getX()/10)*10;
 					int y = (e.getY()/10)*10;
+					goal = new Block(x,y,(float) 0.0,null);
+					searching = true;
+				
 				}
 			}
 			else
@@ -193,7 +187,6 @@ class UFS {
 	      
 	      //s.print();
 	      if(s.x == goal.x && s.y == goal.y){
-	    	  //System.out.println("Found dest");
 	    	  goal.parent = s;
 	    	  found = true;
 	    	  break;
@@ -215,7 +208,7 @@ class UFS {
 	    	return new Stack();
 	    }
 	    
-	    //System.out.println("TreeeSet size: " + beenThere.size());
+	    m.visited.clear();
 	    
 	    for (Block e : frontier) {
 	    	m.setVisited((int)e.x,(int)e.y);
@@ -251,7 +244,7 @@ class UFS {
 				cost =  (float)(10/(m.getTravelSpeed(x,y)))+ root.cost;
 			
 			if(aStar)
-				cost = cost - heuristic;
+				cost = cost + heuristic;
 			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;

@@ -122,10 +122,9 @@ class Model {
 	public State[] getDestinations(){
 		return destinations;
 	}
-	
+
 	public void emptyDestinations(){
 		index = 0;
-		visited.clear();
 		//visited = new ArrayList<State>();
 		destinations = new State[200];
 	}
