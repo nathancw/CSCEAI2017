@@ -28,7 +28,7 @@ class Agent {
 		ArrayList<State> visited = m.getVisited();
 		
 		for(int in = 0; in < visited.size(); in++){
-			g.drawOval(visited.get(in).x,visited.get(in).y,5,5);
+			g.drawOval(visited.get(in).x,visited.get(in).y,9,9);
 		}
 			
 		g.setColor(Color.black);
@@ -54,7 +54,8 @@ class Agent {
 					path = ufs.uniform_cost_search(m, startState, goal);
 					Block current = (Block) path.pop();
 					current = (Block) path.pop(); //Pop twice to get second
-					calculateHeuristic(m,goal.x,goal.y);
+					if(aStar)
+						calculateHeuristic(m,goal.x,goal.y);
 					if(m.getX() == goal.x && m.getY() == goal.y)
 						searching = false;
 					
@@ -99,7 +100,7 @@ class Agent {
 		if(!heuristicFound){
 		for(int x = 0; x < 1200; x+=10)
 			for(int y =0; y < 600; y+=10){
-				temp = (m.getTravelSpeed(x,y));
+				temp = 10/(m.getTravelSpeed(x,y));
 				if(temp > lowest)
 					lowest = temp;
 			}
@@ -109,7 +110,7 @@ class Agent {
 		heuristic = (float) ((Math.sqrt(pow1 + pow2)/lowest));
 		//heuristic = lowest;
 		heuristicFound = true;
-		System.out.println("Using Heuristic value of: " + heuristic);
+		System.out.println("Lowest: " + lowest + " Using Heuristic value of: " + heuristic + " distance: " + Math.sqrt(pow1+pow2));
 	}
 
 	public static void main(String[] args) throws Exception
@@ -249,14 +250,18 @@ class UFS {
 			
 			float cost;
 			if((Math.abs(xMove) + Math.abs(yMove))==20)
-				cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2))+ root.cost;//Cost is speed associated with the terrain square AND distance you will travel at that speed
+				cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2));//Cost is speed associated with the terrain square AND distance you will travel at that speed
 			else
-				cost =  (float)(10/(m.getTravelSpeed(x,y)))+ root.cost;
+				cost =  (float)(10/(m.getTravelSpeed(x,y)));
 			
 			if(aStar){
 				//System.out.println("We doing astar now boys");
+				cost = cost + root.cost;
 				cost = cost + heuristic;
 			}
+			else
+				cost = cost + root.cost;
+			
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
 		
