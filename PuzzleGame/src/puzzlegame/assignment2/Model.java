@@ -80,8 +80,6 @@ class Model {
 
 	void setDestination(float x, float y) {
 		Sprite s = sprites.get(0);
-		destinations[index] = new State((int) x, (int) y);
-		index++;
 		s.xDestination = x;
 		s.yDestination = y;
 	}
@@ -132,6 +130,17 @@ class Model {
 		return index;
 	}
 	
+	public void updateLine(int x, int y){
+		destinations[index] = new State((int) x, (int) y);
+		index++;
+	}
+	
+	public boolean visitedPoint(int x, int y){
+		for(int i = 0; i < index; i++)
+			if(destinations[i].x == x && destinations[i].y == y)
+				return true;
+		return false;
+	}
 	public void setVisited(int x, int y){
 		visited.add(new State(x,y));
 	}

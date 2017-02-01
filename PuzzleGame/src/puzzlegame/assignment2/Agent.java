@@ -180,7 +180,7 @@ class UFS {
 	private float calculateHeur(float xCurr, float yCurr, float xGoal,float yGoal) {
 		float pow1 = (float) Math.pow((xCurr - xGoal),2);
 		float pow2 = (float) Math.pow((yCurr - yGoal),2);
-		float total = (float) ((Math.sqrt(pow1 + pow2)));
+		float total = (float) ((Math.sqrt(pow1 + pow2))/lowest);
 		//System.out.println("Lowest: " + lowest +  "total: " + total);
 		return total;
 	}
@@ -231,6 +231,8 @@ class UFS {
 	    
 	    Block current = goal;
 	    while(current!=null){
+	    	if(!m.visitedPoint((int)current.x,(int)current.y))
+	    	m.updateLine((int)current.x,(int)current.y);
 	    	//current.print();
 	    	path.add(current);
 	    	current = current.parent;
