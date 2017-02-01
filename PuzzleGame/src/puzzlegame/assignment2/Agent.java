@@ -15,7 +15,7 @@ class Agent {
 	Block current;
 	int destinations[][] = new int[80][80];
 	float heuristic = 5;
-	float lowest = 5;
+	float lowest = 0;
 	boolean heuristicFound = false;
 	Block goal = new Block((float)100,(float)100,(float)0,null);
 	boolean searching = false;
@@ -54,7 +54,7 @@ class Agent {
 					path = ufs.uniform_cost_search(m, startState, goal);
 					Block current = (Block) path.pop();
 					current = (Block) path.pop(); //Pop twice to get second
-					
+					calculateHeuristic(m,goal.x,goal.y);
 					if(m.getX() == goal.x && m.getY() == goal.y)
 						searching = false;
 					
@@ -99,15 +99,15 @@ class Agent {
 		if(!heuristicFound){
 		for(int x = 0; x < 1200; x+=10)
 			for(int y =0; y < 600; y+=10){
-				temp = 10*(m.getTravelSpeed(x,y));
-				if(temp < lowest)
+				temp = (m.getTravelSpeed(x,y));
+				if(temp > lowest)
 					lowest = temp;
 			}
 		}
-		//float pow1 = (float) Math.pow((m.getX() - xGoal),2);
-		//float pow2 = (float) Math.pow((m.getY() - yGoal),2);
-		//heuristic = (float) (Math.sqrt(pow1 + pow2) * lowest);
-		heuristic = lowest;
+		float pow1 = (float) Math.pow((m.getX() - xGoal),2);
+		float pow2 = (float) Math.pow((m.getY() - yGoal),2);
+		heuristic = (float) ((Math.sqrt(pow1 + pow2)/lowest));
+		//heuristic = lowest;
 		heuristicFound = true;
 		System.out.println("Using Heuristic value of: " + heuristic);
 	}
@@ -255,7 +255,7 @@ class UFS {
 			
 			if(aStar){
 				//System.out.println("We doing astar now boys");
-				cost = cost - heuristic;
+				cost = cost + heuristic;
 			}
 			Block child = new Block(x,y,cost,root);
 			Block oldChild;
