@@ -49,13 +49,11 @@ class Agent {
 			
 			if(searching && m.getX() == m.getDestinationX() && m.getY() == m.getDestinationY()){
 				
-					UFS ufs = new UFS(aStar,heuristic);
+					UFS ufs = new UFS(aStar,heuristic, lowest);
 					Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
 					path = ufs.uniform_cost_search(m, startState, goal);
 					Block current = (Block) path.pop();
 					current = (Block) path.pop(); //Pop twice to get second
-					if(aStar)
-						calculateHeuristic(m,goal.x,goal.y);
 					if(m.getX() == goal.x && m.getY() == goal.y)
 						searching = false;
 					
@@ -82,7 +80,7 @@ class Agent {
 					int y = (e.getY()/10)*10;
 					goal = new Block(x,y,(float) 0.0,null);
 					aStar = true;
-					calculateHeuristic(m,x,y);
+					calculateLowest(m,x,y);
 					searching = true;
 				
 				}
@@ -93,24 +91,18 @@ class Agent {
 		}
 	}
 
-	private void calculateHeuristic(Model m, float xGoal,float yGoal) {
+	private void calculateLowest(Model m, float xGoal,float yGoal) {
 		
 		float temp;
 		
 		if(!heuristicFound){
 		for(int x = 0; x < 1200; x+=10)
 			for(int y =0; y < 600; y+=10){
-				temp = 10/(m.getTravelSpeed(x,y));
+				temp = (m.getTravelSpeed(x,y));
 				if(temp > lowest)
 					lowest = temp;
 			}
 		}
-		float pow1 = (float) Math.pow((m.getX() - xGoal),2);
-		float pow2 = (float) Math.pow((m.getY() - yGoal),2);
-		heuristic = (float) ((Math.sqrt(pow1 + pow2)/lowest));
-		//heuristic = lowest;
-		heuristicFound = true;
-		System.out.println("Lowest: " + lowest + " Using Heuristic value of: " + heuristic + " distance: " + Math.sqrt(pow1+pow2));
 	}
 
 	public static void main(String[] args) throws Exception
@@ -177,10 +169,20 @@ class UFS {
 	Stack<Block> path;
 	boolean aStar;
 	float heuristic;
-	
-	public UFS(boolean a, float h){
+	Block goal;
+	float lowest;
+	public UFS(boolean a, float h, float l){
 		this.aStar = a;
 		this.heuristic = h;
+		this.lowest = l;
+	}
+	
+	private float calculateHeur(float xCurr, float yCurr, float xGoal,float yGoal) {
+		float pow1 = (float) Math.pow((xCurr - xGoal),2);
+		float pow2 = (float) Math.pow((yCurr - yGoal),2);
+		float total = (float) ((Math.sqrt(pow1 + pow2)));
+		//System.out.println("Lowest: " + lowest +  "total: " + total);
+		return total;
 	}
 	
 	  public Stack<Block> uniform_cost_search(Model m, Block startState, Block goal) {
@@ -192,6 +194,7 @@ class UFS {
 		path = new Stack<Block>();
 	    frontier.add(startState);
 	    beenThere.add(startState);
+	    this.goal = goal;
 	    
 	    while(frontier.size() > 0) {
 	      Block s = (Block) frontier.remove(); // get lowest-cost state
@@ -256,8 +259,8 @@ class UFS {
 			
 			if(aStar){
 				//System.out.println("We doing astar now boys");
-				cost = cost + root.cost;
-				cost = cost + heuristic;
+				float heur = calculateHeur(x,y,goal.x,goal.y);
+				cost = root.cost + cost + heur;
 			}
 			else
 				cost = cost + root.cost;
