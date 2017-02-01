@@ -23,6 +23,8 @@ class Agent {
 	int destinations[][] = new int[80][80];
 	float heuristic = 5;
 	boolean heuristicFound = false;
+	Block goal = null;
+	boolean newGoal = false;
 	
 	void drawPlan(Graphics g, Model m) {
 		g.setColor(Color.red);
@@ -44,53 +46,46 @@ class Agent {
 
 	void update(Model m)
 	{
-		Controller c = m.getController();
-		accum++;
-		if(accum == 7){
-			
-			if(!path.isEmpty()){
-				current = (Block) path.pop();
-			//	current.print();
-				m.setDestination(current.x, current.y);
-			}
-			accum = 0;
+		Controller c = m.getController();	
+		if(!path.isEmpty()){
+			current = (Block) path.pop();
+			m.setDestination(current.x, current.y);
 		}
 
 		while(true)
 		{
-			MouseEvent e = c.nextMouseEvent();
+			MouseEvent e = c.nextMouseEvent();	
 			
-			if(e == null)
-				break;
-			else if(SwingUtilities.isLeftMouseButton(e)){
+			if(m.getX() == m.getDestinationX() && m.getY() == m.getDestinationY()){
+				
+					UFS ufs = new UFS(false,(float)0.0);
+					Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
+					if(goal ==null)
+						break;
+					path = ufs.uniform_cost_search(m, startState, goal);
+					
+					Block current = (Block) path.pop();
+					m.setDestination((float)current.x, (float)current.y);
+				
+			}
+			
+			if(SwingUtilities.isLeftMouseButton(e)){
 				
 				m.emptyDestinations();
-				Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
-				UFS ufs = new UFS(false,(float)0.0);
 				int x = (e.getX()/10)*10;
 				int y = (e.getY()/10)*10;
-				Block goal = new Block(x,y,(float) 0.0,null);
-				//Block goal = new Block(m.getX()+1020,m.getY()+290,(float) 0.0,null);
-				//Do UFS with no A*
-				path = ufs.uniform_cost_search(m, startState, goal);
+				goal = new Block(x,y,(float) 0.0,null);
+				newGoal = true;
 			}
 			else if(SwingUtilities.isRightMouseButton(e)){
 				System.out.println("Doing A* Search");
 				if(!heuristicFound)
 				calculateHeuristic(m);
-				
 				m.emptyDestinations();
-				Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
-				UFS ufs = new UFS(true, heuristic);
-				System.out.println("Clicked: " + e.getX() + "," + e.getY());
 				int x = (e.getX()/10)*10;
 				int y = (e.getY()/10)*10;
-				System.out.println("New values: " + x + "," + y);
-				Block goal = new Block(x,y,(float) 0.0,null);
-				
-				//Do UFS with A*
-				path = ufs.uniform_cost_search(m, startState, goal);
 			}
+			
 			
 		}
 	}
