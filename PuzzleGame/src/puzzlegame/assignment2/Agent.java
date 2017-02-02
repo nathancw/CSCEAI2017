@@ -17,7 +17,7 @@ class Agent {
 	float heuristic = 5;
 	float lowest = 0;
 	boolean heuristicFound = false;
-	Block goal = new Block((float)100,(float)100,(float)0,null);
+	Block goal = new Block((float)100,(float)100,(float)0,null,(float)0.0);
 	boolean searching = false;
 	boolean aStar = false;
 	
@@ -37,6 +37,7 @@ class Agent {
 			
 		}
 		
+		
 	}
 
 	void update(Model m)
@@ -50,7 +51,7 @@ class Agent {
 			if(searching && m.getX() == m.getDestinationX() && m.getY() == m.getDestinationY()){
 				
 					UFS ufs = new UFS(aStar,heuristic, lowest);
-					Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null);
+					Block startState = new Block(m.getX(),m.getY(),(float) 0.0,null,(float)0.0);
 					path = ufs.uniform_cost_search(m, startState, goal);
 					Block current = (Block) path.pop();
 					current = (Block) path.pop(); //Pop twice to get second
@@ -63,22 +64,23 @@ class Agent {
 			
 			if(e !=null){
 				if(SwingUtilities.isLeftMouseButton(e)){
-					
+					m.drawLine = true;
 					aStar = false;
 					m.emptyDestinations();
 					m.visited.clear();
 					int x = (e.getX()/10)*10;
 					int y = (e.getY()/10)*10;
-					goal = new Block(x,y,(float) 0.0,null);
+					goal = new Block(x,y,(float) 0.0,null,(float)0.0);
 					searching = true;
 				}
 				else if(SwingUtilities.isRightMouseButton(e)){
-					System.out.println("Doing A* Search");
+					//System.out.println("Doing A* Search");
+					m.drawLine = true;
 					m.emptyDestinations();
 					m.visited.clear();
 					int x = (e.getX()/10)*10;
 					int y = (e.getY()/10)*10;
-					goal = new Block(x,y,(float) 0.0,null);
+					goal = new Block(x,y,(float) 0.0,null,(float)0.0);
 					aStar = true;
 					calculateLowest(m,x,y);
 					searching = true;
@@ -116,12 +118,14 @@ class Block {
 	  Block parent;
 	  float x;
 	  float y;
+	  float heuristic;
 	  
-	  Block(float x, float y, float cost, Block par) {
+	  Block(float x, float y, float cost, Block par, float h) {
 		  this.cost = cost;
 		  this.parent = par;
 		  this.x = x;
 		  this.y = y;
+		  this.heuristic = h;
 	  }
 	  
 	  void print(){
@@ -153,9 +157,9 @@ class CostComparator implements Comparator<Block>
 {
 	public int compare(Block a, Block b)
 	{
-			if(a.cost > b.cost)
+			if((a.cost + a.heuristic) > (b.cost + b.heuristic))
 				return 1;
-			else if(a.cost < b.cost)
+			else if((a.cost + a.heuristic) < (b.cost + b.heuristic))
 					return -1;
 		return 0;
 	}
@@ -231,14 +235,17 @@ class UFS {
 	    
 	    Block current = goal;
 	    while(current!=null){
-	    	if(!m.visitedPoint((int)current.x,(int)current.y))
-	    	m.updateLine((int)current.x,(int)current.y);
-	    	//current.print();
+	    	//System.out.println("visited : " + current.x + "," + current.y + " : " + m.visitedPoint((int)current.x,(int)current.y));
+	    	if(m.drawLine)
+	    		m.updateLine((int)current.x,(int)current.y);
+	    	
+	    	
 	    	path.add(current);
 	    	current = current.parent;
 	    	
 	    }
 	    
+	    m.drawLine =false;
 	    return path;
 	    //throw new RuntimeException("There is no path to the goal");
 	  }
@@ -259,15 +266,16 @@ class UFS {
 			else
 				cost =  (float)(10/(m.getTravelSpeed(x,y)));
 			
+			float heur = 0;
 			if(aStar){
-				//System.out.println("We doing astar now boys");
-				float heur = calculateHeur(x,y,goal.x,goal.y);
-				cost = root.cost + cost + heur;
-			}
-			else
+				heur = calculateHeur(x,y,goal.x,goal.y);
 				cost = cost + root.cost;
+			}
+			else{
+				cost = cost + root.cost;
+			}
 			
-			Block child = new Block(x,y,cost,root);
+			Block child = new Block(x,y,cost,root, heur);
 			Block oldChild;
 		
 			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost

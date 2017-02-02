@@ -32,6 +32,7 @@ class Model {
 	State destinations[];
 	ArrayList<State> visited;
 	int index = 0;
+	boolean drawLine = true;
 
 	Model(Controller c) {
 		this.controller = c;
