@@ -27,6 +27,7 @@ class Game
 		//Add mutation
 		int mutationCount = 0;
 		int mutationRate = 500; //1/mutation rate to be mutated
+		double mutationAverage = 1.5;
 		for(int i = 0; i < 100; i++)
 		{
 			double[] chromosome = population.row(i);
@@ -37,7 +38,7 @@ class Game
 					int mut = r.nextInt(291);
 					double gaus = r.nextGaussian();
 					System.out.println("Mutating chromosome[" + mut + "]: " + chromosome[mut] + " Mutation count : " + mutationCount);
-					chromosome[mut]+= 0.05 * gaus;
+					chromosome[mut]+= mutationAverage * gaus;
 					System.out.println("New value chromosome[" + mut + "]: " + chromosome[mut]);
 					mutationCount++;
 				}
@@ -47,7 +48,7 @@ class Game
 		//Natural Selection
 		
 		//Choose pair of chromosones
-		int numTournaments = 5;
+		int numTournaments = 10;
 		int probToSurvive = 66;
 		for(int x = 0; x < numTournaments; x++){
 			int cNum1 = r.nextInt(100); //First chromosome num
@@ -60,7 +61,7 @@ class Game
 			//I'm assuming the chances of 80 being zero are near to none
 			if(cNum1 != cNum2 && (chromoOne[80] != 0 || chromoTwo[80]!=0)){
 				
-				System.out.println("Battling " + cNum1 + " and " + cNum2);
+				System.out.print("Battling " + cNum1 + " and " + cNum2 + " ");
 				//IAgent red = new IAgent();
 				
 				int winner = 0;
@@ -163,10 +164,10 @@ class Game
 						population.row(i)[x] = mom[x];
 				}
 				
-				System.out.println("Done making the child.");
-				System.out.println("Dad: " + Arrays.toString(dad));
-				System.out.println("Mother: " + Arrays.toString(mom));
-				System.out.println("New child: " + Arrays.toString(population.row(i)));
+				//System.out.println("Done making the child.");
+				//System.out.println("Dad: " + Arrays.toString(dad));
+				//System.out.println("Mother: " + Arrays.toString(mom));
+				//System.out.println("New child: " + Arrays.toString(population.row(i)));
 			}
 		}
 
