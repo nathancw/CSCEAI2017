@@ -24,10 +24,13 @@ class Game
 		//       Please write some code to evolve this population.
 		//       (For tournament selection, you will need to call Controller.doBattleNoGui(agent1, agent2).)
 		
+		int numEvolutions = 0;
+		int maxEvolutions = 100;
+		while(numEvolutions < maxEvolutions){
 		//Add mutation
-		int mutationCount = 0;
+		//int mutationCount = 0;
 		int mutationRate = 500; //1/mutation rate to be mutated
-		double mutationAverage = 1.5;
+		double mutationAverage = 0.7;
 		for(int i = 0; i < 100; i++)
 		{
 			double[] chromosome = population.row(i);
@@ -37,10 +40,10 @@ class Game
 					//Pick random chromosone
 					int mut = r.nextInt(291);
 					double gaus = r.nextGaussian();
-					System.out.println("Mutating chromosome[" + mut + "]: " + chromosome[mut] + " Mutation count : " + mutationCount);
+					//System.out.println("Mutating chromosome[" + mut + "]: " + chromosome[mut] + " Mutation count : " + mutationCount);
 					chromosome[mut]+= mutationAverage * gaus;
-					System.out.println("New value chromosome[" + mut + "]: " + chromosome[mut]);
-					mutationCount++;
+					//System.out.println("New value chromosome[" + mut + "]: " + chromosome[mut]);
+					//mutationCount++;
 				}
 		}
 		//Done adding mutations
@@ -72,34 +75,34 @@ class Game
 				}
 
 				if(winner == 1){
-					System.out.print("ChromoOne won.");
+					System.out.print("ChromoOne won.\n");
 					int killLoser = r.nextInt(100);
 					
 					if(killLoser <= probToSurvive){ //67% to killLoser and live
 						for(int i = 0; i < chromoTwo.length; i++)
 							population.row(cNum2)[i] = 0; //Kill the chromoOne
-						System.out.println(" Killed chromoTwo -- " + cNum2);
+						//System.out.println(" Killed chromoTwo -- " + cNum2);
 					}
 					else{ //Oops he gets to be killed
 						for(int i = 0; i < chromoOne.length; i++)
 							population.row(cNum1)[i] = 0; //Kill the chromoOne
-						System.out.println(" Killed chromoOne -- " + cNum1);
+						//System.out.println(" Killed chromoOne -- " + cNum1);
 					}
 				}
 				else if(winner == -1){
-					System.out.print("ChromoTwo won.");
+					System.out.print("ChromoTwo won.\n");
 					
 					int killLoser = r.nextInt(100);
 					
 					if(killLoser <=probToSurvive){ //67% to killLoser and live
 						for(int i = 0; i < chromoOne.length; i++)
 							population.row(cNum1)[i] = 0; //Kill the chromoOne
-						System.out.println(" Killed chromoOne -- " + cNum1);
+						//System.out.println(" Killed chromoOne -- " + cNum1);
 					}
 					else{ //Oops he gets to be killed
 						for(int i = 0; i < chromoTwo.length; i++)
 							population.row(cNum2)[i] = 0; //Kill the chromoOne
-						System.out.println(" Killed chromoTwo -- " + cNum2);
+						//System.out.println(" Killed chromoTwo -- " + cNum2);
 					}
 					
 				}
@@ -171,18 +174,22 @@ class Game
 			}
 		}
 
+		numEvolutions++;
+		System.out.println("Evolution number: " + numEvolutions);
+	}//End of while
 
 
 
 		// Return an arbitrary member from the population
-		return population.row(0);
+		int num = r.nextInt(100);
+		return population.row(num);
 	}
 
 
 	public static void main(String[] args) throws Exception
 	{
 		double[] w = evolveWeights();
-		//Controller.doBattle(new ReflexAgent(), new NeuralAgent(w));
+		Controller.doBattle(new ReflexAgent(), new NeuralAgent(w));
 	}
 
 }
