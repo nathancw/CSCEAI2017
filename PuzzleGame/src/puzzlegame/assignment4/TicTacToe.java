@@ -2,6 +2,7 @@ package puzzlegame.assignment4;
 
 import java.util.List;
 import java.util.Queue;
+import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -11,15 +12,17 @@ class Node {
     Node parent = null;
     char[] data = null;
     int val;
+    char player;
 
     public Node(char[] data) {
         this.data = data;
     }
 
-    public Node(char[] data, Node parent, int val) {
+    public Node(char[] data, Node parent, int val, char p) {
         this.data = data;
         this.parent = parent;
         this.val = val;
+        this.player = p;
     }
 
     public List<Node> getChildren() {
@@ -66,15 +69,104 @@ public class TicTacToe {
 	Node root;
 	Queue queue;
 	int depth;
+	char[] board = {'1','2','3','4','5','6','7','8','9'};
 	public TicTacToe(){
+		
 		depth = 0;
-		char[] board = {'1','2','3','4','5','6','7','8','9'};
-		root = new Node(board,null,20);
+		root = new Node(board,null,20,'O');
 		queue = new LinkedList<Node>();
 		queue.add(root);
-		calculateBoardStates(root,'X');
+		calculateBoardStates(root);
 		//drawBoard(board);
+		
+		playTicTacToe();
+		
+		
 	
+	}
+	
+	public void playTicTacToe(){
+		
+		Scanner reader = new Scanner(System.in);  // Reading from System.in
+		Node curr = root;
+		int d = depth;
+		while(true){
+			drawBoard(board);
+			System.out.print("Your Move:" );
+			int n = reader.nextInt(); //X move
+			board[n-1] = 'X';
+			
+			/*check winners or losers*/
+			if(gameCompleted(board)){
+				drawBoard(board);
+				System.out.println("Draw match.");
+				break;
+			}
+			else if(playerWon(board,'X')){
+				drawBoard(board);
+				System.out.println("You won! Wait... how?");
+				break;
+			}
+			
+			
+			//Move the root node.
+			int size = curr.children.size();
+			for(int x = 0 ; x < size; x++){
+				char [] tempBoard = curr.children.get(x).data; //get temp board
+				//System.out.println("-----");
+				//drawBoard(tempBoard);
+				//System.out.println("-----");
+				boolean found = true;
+				for(int i = 0; i < 9; i++)
+					if(tempBoard[i] != board[i])
+						found = false;
+				
+				if(found){
+					//System.out.println("found child at: " + x);
+					curr = curr.children.get(x);
+					x = 9;
+					//drawBoard(tempBoard);
+				}	
+			}
+			//Done moving root node	
+			//Move depth down since we played
+			d = d - 1;
+			
+	
+			
+			//IF game is not over and nobody won then
+			//Find computer move.
+			miniMax(curr,d,'X');
+		
+			//Move to O move node with greatest value
+			size = curr.children.size();
+			int max = -9999;
+			int maxIndex = 0;
+			for(int x = 0 ; x < size; x++){
+				if(curr.children.get(x).val > max){
+					maxIndex = x;	
+					max = curr.children.get(x).val;
+					//System.out.println("Max idnex " + maxIndex + "max : " + max);
+				}
+			}
+			
+			//We done, print the new board
+			curr = curr.children.get(maxIndex);
+			board = curr.data;
+			
+			/*Check winners*/
+			
+			if(playerWon(board,'O')){
+				drawBoard(board);
+				System.out.println("You lost, A.I prevails once more.");
+				
+				break;
+			}
+			
+		}
+		
+		
+		
 	}
 	
 	public void drawBoard(char[] board){
@@ -87,10 +179,15 @@ public class TicTacToe {
 		
 	}
 	
-	public void calculateBoardStates(Node root, char player){
-		
+	public void calculateBoardStates(Node root){
+		char player = 'X';
 		while(!queue.isEmpty()){
 			Node current = (Node) queue.remove();
+			if(current.player =='X')
+				player = 'O';
+			else
+				player = 'X';
+			
 			addState(1,player,current);
 			addState(2,player, current);
 			addState(3,player, current);
@@ -100,11 +197,6 @@ public class TicTacToe {
 			addState(7,player, current);
 			addState(8,player, current);
 			addState(9,player, current);
-			
-			if(player=='X')
-				player = 'O';
-			else if(player=='O')
-				player = 'X';
 		}
 		
 		//for(int x = 0; x < 9; x++){
@@ -113,7 +205,7 @@ public class TicTacToe {
 			//drawBoard(curr.children.get(0).data);
 			curr = curr.children.get(0);
 			depth++;
-			System.out.println("\n " + depth + "\n");
+			//System.out.println("val:  " + curr.val + "\n");
 		}
 		
 	}
@@ -137,7 +229,7 @@ public class TicTacToe {
 					else if(gameCompleted(boardCopy))
 							val = 0;
 					
-					Node node = new Node(boardCopy, root,  val);
+					Node node = new Node(boardCopy, root,  val, player);
 					
 					//drawBoard(boardCopy);
 					queue.add(node);
@@ -171,8 +263,9 @@ public class TicTacToe {
 	
 
 	public boolean gameCompleted(char[] board){
+		
 		for(int x = 0; x < 9; x++)
-			if(board[x] != 'X' || board[x] !='O')
+			if(board[x] != 'X' && board[x] !='O')
 				return false;
 		
 		return true;
@@ -185,13 +278,18 @@ public class TicTacToe {
 	}
 	
 	int miniMax(Node n, int depth, char player){
-		if(depth == 0)
+		
+		//System.out.println("Depth: " + depth + "Player: " + player + " Node.val: " + n.val + " Size : " + n.children.size());
+		int size = n.children.size();
+		
+		if(n.children.size() == 0)
 			return n.val;
 		int bestValue;
 		
 		if(player == 'X'){ //maximizing player
 			bestValue = -999;
-			for(int x = 0; x  < n.children.size(); x++){
+			for(int x = 0; x  < size; x++){
+			//	System.out.println("x : " + x);
 				int value = miniMax(n.children.get(x),depth-1,'O');
 				
 				if(value > bestValue)
@@ -199,28 +297,28 @@ public class TicTacToe {
 				else
 					bestValue = bestValue;
 				
-				return bestValue;
 				
 			}
+			n.val = bestValue;
+			return bestValue;
 		}
 		else{
 			bestValue = 999;
-			for(int x = 0; x  < n.children.size(); x++){
+			for(int x = 0; x  < size; x++){
 				int value = miniMax(n.children.get(x),depth-1,'X');
-				
+	
 				if(value <	 bestValue)
 					bestValue = value;
 				else
 					bestValue = bestValue;
 				
-				return bestValue;
-				
 			}
-			
+			n.val = bestValue;
+			return bestValue;
 			
 			
 		}
-		return 0;
+		
 	}
 	
 }
