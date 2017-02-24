@@ -2,7 +2,67 @@ package puzzlegame.assignment5;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+
+
+
+class Node {
+    List<Node> children = new ArrayList<Node>();
+    Node parent = null;
+    char[] data = null;
+    int val;
+    char player;
+
+    public Node(char[] data) {
+        this.data = data;
+    }
+
+    public Node(char[] data, Node parent, int val, char p) {
+        this.data = data;
+        this.parent = parent;
+        this.val = val;
+        this.player = p;
+    }
+
+    public List<Node> getChildren() {
+        return children;
+    }
+
+    public void setParent(Node parent) {
+        parent.addChild(this);
+        this.parent = parent;
+    }
+
+    public void addChild(char[] data) {
+        Node child = new Node(data);
+        child.setParent(this);
+        this.children.add(child);
+    }
+
+    public void addChild(Node child) {
+     //   child.setParent(this);
+        this.children.add(child);
+    }
+
+ 
+
+    public boolean isRoot() {
+        return (this.parent == null);
+    }
+
+    public boolean isLeaf() {
+        if(this.children.size() == 0) 
+            return true;
+        else 
+            return false;
+    }
+
+    public void removeParent() {
+        this.parent = null;
+    }
+}
+
 
 /// Represents the state of a chess game
 class ChessState {
@@ -156,7 +216,7 @@ class ChessState {
 				stream.print("--+");
 			stream.println();
 		}
-		stream.println("  A  B  C  D  E  F  G  H");
+		stream.println("  A  B  C  D  E  F  G  H" + "\n");
 	}
 
 	/// Pass in the coordinates of a square with a piece on it
@@ -406,14 +466,24 @@ class ChessState {
 
 
 	public static void main(String[] args) throws Exception {
-		ChessState s = new ChessState();
-		s.resetBoard();
-		s.printBoard(System.out);
-		System.out.println();
-		s.move(1/*B*/, 0/*1*/, 2/*C*/, 2/*3*/);
-		s.printBoard(System.out);
+		ChessState s = new ChessState();             // Make a new state
+		s.resetBoard();                              // Initialize to starting setup
+		ChessMoveIterator it = s.iterator(true);     // Iterate over all valid moves
+		ChessState.ChessMove m = it.next();			
+		while(it.hasNext()) {    
+		    m = it.next();
+		}                                           
+	    s.move(m.xSource, m.ySource, m.xDest, m.yDest); 
+	    int h = s.heuristic(new Random());                       
+		s.printBoard(System.out);    
+		
+		//s.printBoard(System.out);
+		//System.out.println();
+		//s.move(1/*B*/, 0/*1*/, 2/*C*/, 2/*3*/);
+		//s.printBoard(System.out); 
 	}
 }
+
 
 
 
