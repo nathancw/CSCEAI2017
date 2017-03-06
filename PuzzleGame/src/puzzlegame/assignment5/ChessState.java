@@ -134,6 +134,7 @@ class ChessState {
 	int heuristic(Random rand)
 	{
 		int score = 0;
+		boolean queen = false;
 		for(int y = 0; y < 8; y++)
 		{
 			for(int x = 0; x < 8; x++)
@@ -147,14 +148,16 @@ class ChessState {
 					case Rook: value = 63; break;
 					case Knight: value = 31; break;
 					case Bishop: value = 36; break;
-					case Queen: value = 88; break;
-					case King: value = 500; break;
+					case Queen: value = 88; queen = true; break;
+					case King: value = 500;  break;
 					default: throw new RuntimeException("what?");
 				}
+			
 				if(isWhite(x, y))
 					score += value;
 				else
 					score -= value;
+				
 			}
 		}
 		return score + rand.nextInt(3) - 1;
@@ -465,16 +468,33 @@ class ChessState {
 		
 		ChessState s = new ChessState();             // Make a new state
 		s.resetBoard();                              // Initialize to starting setup
-		boolean white = true;
-		int depth = 4;
+
+		int depth = 1;
 		
-		computeChildren(s,depth,white);
+		//Fools mate
+		s.move(6, 1, 6, 3); //white
+		s.move(4, 6, 4, 5);//black
+		
+		//manually move the pawn up
+		ChessState.ChessMove m = new ChessState.ChessMove();
+		m.xSource = 5;
+		m.ySource = 1;
+		m.xDest = 5;
+		m.yDest = 2;
+		//s.move(5, 1, 5, 2);//white
+		boolean white = false;
+		s.printBoard(System.out);
+		s.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move the board to the right state
+		
+		Node root = new Node(m); //Create the new root node, PS BLACK HAS NEXT TURN
+		
+		computeTree(root,s,depth,white);
 		
 	
 
 	}
 	
-	static void computeChildren(ChessState s, int depth, boolean white) throws Exception{
+	static void computeTree(Node root,ChessState s, int depth, boolean white) throws Exception{
 		if(depth == 0)
 			return;
 		
@@ -486,14 +506,18 @@ class ChessState {
 		it = s.iterator(white); //Create new iterator
 		m = it.next(); //Find next move
 		while(it.hasNext()) {
+
 			ChessState newState = new ChessState(s); //Make new state
 			newState.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move new state to the next move
 			
-			computeChildren(newState,depth,!white);
-		    int h = newState.heuristic(new Random());
-		    System.out.println("h: " + h   + " white: " + white);	
+			int h = newState.heuristic(new Random()); //Find node value
+		    Node child = new Node(m,root,h,white); //Make new child with all the new values
+		    
+			computeTree(child, newState,depth,!white);
+		  
+		    System.out.println(h);	
 		
-			newState.printBoard(System.out);
+			//newState.printBoard(System.out);
 			m = it.next();
 		}
 	
