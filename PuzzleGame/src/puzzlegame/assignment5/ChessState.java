@@ -6,23 +6,22 @@ import java.util.List;
 import java.util.Random;
 
 
-
 class Node {
     List<Node> children = new ArrayList<Node>();
     Node parent = null;
-    char[] data = null;
+	ChessState.ChessMove move = null;
     int val;
-    char player;
+    boolean white;
 
-    public Node(char[] data) {
-        this.data = data;
+    public Node(ChessState.ChessMove m) {
+        this.move = m;
     }
 
-    public Node(char[] data, Node parent, int val, char p) {
-        this.data = data;
+    public Node(ChessState.ChessMove m, Node parent, int val, boolean p) {
+        this.move = m;
         this.parent = parent;
         this.val = val;
-        this.player = p;
+        this.white = p;
     }
 
     public List<Node> getChildren() {
@@ -34,18 +33,15 @@ class Node {
         this.parent = parent;
     }
 
-    public void addChild(char[] data) {
-        Node child = new Node(data);
+    public void addChild(ChessState.ChessMove m) {
+        Node child = new Node(m);
         child.setParent(this);
         this.children.add(child);
     }
 
     public void addChild(Node child) {
-     //   child.setParent(this);
         this.children.add(child);
     }
-
- 
 
     public boolean isRoot() {
         return (this.parent == null);
@@ -466,22 +462,44 @@ class ChessState {
 
 
 	public static void main(String[] args) throws Exception {
+		
 		ChessState s = new ChessState();             // Make a new state
 		s.resetBoard();                              // Initialize to starting setup
-		ChessMoveIterator it = s.iterator(true);     // Iterate over all valid moves
-		ChessState.ChessMove m = it.next();			
-		while(it.hasNext()) {    
-		    m = it.next();
-		}                                           
-	    s.move(m.xSource, m.ySource, m.xDest, m.yDest); 
-	    int h = s.heuristic(new Random());                       
-		s.printBoard(System.out);    
+		boolean white = true;
+		int depth = 4;
 		
-		//s.printBoard(System.out);
-		//System.out.println();
-		//s.move(1/*B*/, 0/*1*/, 2/*C*/, 2/*3*/);
-		//s.printBoard(System.out); 
+		computeChildren(s,depth,white);
+		
+	
+
 	}
+	
+	static void computeChildren(ChessState s, int depth, boolean white) throws Exception{
+		if(depth == 0)
+			return;
+		
+		depth--;
+		
+		ChessMoveIterator it;  
+		ChessState.ChessMove m;
+		
+		it = s.iterator(white); //Create new iterator
+		m = it.next(); //Find next move
+		while(it.hasNext()) {
+			ChessState newState = new ChessState(s); //Make new state
+			newState.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move new state to the next move
+			
+			computeChildren(newState,depth,!white);
+		    int h = newState.heuristic(new Random());
+		    System.out.println("h: " + h   + " white: " + white);	
+		
+			newState.printBoard(System.out);
+			m = it.next();
+		}
+	
+		
+	}
+	
 }
 
 
