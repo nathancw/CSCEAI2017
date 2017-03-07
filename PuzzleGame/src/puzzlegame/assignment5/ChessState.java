@@ -468,7 +468,7 @@ class ChessState {
 		ChessState s = new ChessState();             // Make a new state
 		s.resetBoard();                              // Initialize to starting setup
 
-		int depth = 1;
+		int depth = 3;
 		
 		//Fools mate
 		s.move(6, 1, 6, 3); //white
@@ -486,28 +486,46 @@ class ChessState {
 		s.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move the board to the right state
 		
 		/*
-		s.move(3, 7, 7, 3);
+		s.move(3, 7, 7, 3); //Move queen to check mate - black
+		s.printBoard(System.out);
+		
+		s.move(4, 1, 4, 2); //move random pawn - white
 		s.printBoard(System.out);
 		int h = s.heuristic(new Random()); //Find node value
 		System.out.println(h);	
-		*/	
+		
+		s.move(7, 3, 4, 0); //Take king - black - game over
+		h = s.heuristic(new Random()); //Find node value
+		System.out.println(h);	
+		*/
+		
+		
+		
 		
 		Node root = new Node(m); //Create the new root node, PS BLACK HAS NEXT TURN
 		
-		
 		computeTree(root,s,depth,white);
 		
-		//Debug print the children of the root
-		ChessState prev;
-		System.out.println("Size: " + root.children.size());
+		int bestValue = miniMax(root,depth,-999,999,false); //Find the best move
+		int childNum = 0;
+		boolean found = false;
 		for(int x = 0;  x < root.children.size(); x++){
-			prev = new ChessState(s);
-			ChessState.ChessMove m1 = root.children.get(x).move;
-			System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
-			prev.move(m1.xSource,m1.ySource,m1.xDest,m1.yDest);
-			prev.printBoard(System.out);
+			Node n = root.children.get(x);
+			if(n.val == bestValue)
+				found = true;
+			
+			if(found){
+				System.out.println("Found best child at: " + x + " val: " + n.val);
+				childNum = x;
+				x = root.children.size();
+				
+			}			
 		}
+		ChessState.ChessMove m1 = root.children.get(childNum).move;
+		System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
 		
+		s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
+		s.printBoard(System.out);
 
 	}
 	
@@ -533,7 +551,7 @@ class ChessState {
 		    
 			computeTree(child, newState,depth,!white);
 		  
-		    System.out.print(h + " ");	
+		    System.out.println(h + " ");	
 		
 			//newState.printBoard(System.out);
 			m = it.next();
@@ -542,7 +560,7 @@ class ChessState {
 		
 	}
 	
-	int miniMax(Node n, int depth, int a, int b, boolean white){
+	static int miniMax(Node n, int depth, int a, int b, boolean white){
 		
 		//System.out.println("Depth: " + depth + "Player: " + player + " Node.val: " + n.val + " Size : " + n.children.size());
 		int size = n.children.size();
