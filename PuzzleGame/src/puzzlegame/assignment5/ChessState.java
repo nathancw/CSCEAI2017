@@ -483,14 +483,32 @@ class ChessState {
 		m.yDest = 2;
 		//s.move(5, 1, 5, 2);//white
 		boolean white = false;
-		s.printBoard(System.out);
+		//s.printBoard(System.out);
 		s.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move the board to the right state
+		
+		/*
+		s.move(3, 7, 7, 3);
+		s.printBoard(System.out);
+		int h = s.heuristic(new Random()); //Find node value
+		System.out.println(h);	
+		*/	
 		
 		Node root = new Node(m); //Create the new root node, PS BLACK HAS NEXT TURN
 		
+		
 		computeTree(root,s,depth,white);
 		
-	
+		//Debug print the children of the root
+		ChessState prev;
+		System.out.println("Size: " + root.children.size());
+		for(int x = 0;  x < root.children.size(); x++){
+			prev = new ChessState(s);
+			ChessState.ChessMove m1 = root.children.get(x).move;
+			System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
+			prev.move(m1.xSource,m1.ySource,m1.xDest,m1.yDest);
+			prev.printBoard(System.out);
+		}
+		
 
 	}
 	
@@ -512,10 +530,11 @@ class ChessState {
 			
 			int h = newState.heuristic(new Random()); //Find node value
 		    Node child = new Node(m,root,h,white); //Make new child with all the new values
+		    root.addChild(child);
 		    
 			computeTree(child, newState,depth,!white);
 		  
-		    System.out.println(h);	
+		    System.out.print(h + " ");	
 		
 			//newState.printBoard(System.out);
 			m = it.next();
