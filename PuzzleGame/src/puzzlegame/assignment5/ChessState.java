@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-
 class Node {
     List<Node> children = new ArrayList<Node>();
     Node parent = null;
@@ -542,6 +541,56 @@ class ChessState {
 	
 		
 	}
+	
+	int miniMax(Node n, int depth, int a, int b, boolean white){
+		
+		//System.out.println("Depth: " + depth + "Player: " + player + " Node.val: " + n.val + " Size : " + n.children.size());
+		int size = n.children.size();
+		int alpha = a;
+		int beta = b;
+		
+		if(n.children.size() == 0)
+			return n.val;
+		int bestValue;
+		
+		if(white == true){ //maximizing player
+			bestValue = -999;
+			for(int x = 0; x  < size; x++){
+			//	System.out.println("x : " + x);
+				int value = miniMax(n.children.get(x),depth-1,alpha, beta,false);
+				
+				bestValue = Math.max(value, bestValue);
+				alpha = Math.max(a,bestValue);
+				
+				if(b < alpha)
+					break; //MAYBE ONLY RETURN?
+				
+				
+			}
+			n.val = bestValue;
+			return bestValue;
+		}
+		else{
+			bestValue = 999;
+			for(int x = 0; x  < size; x++){
+				int value = miniMax(n.children.get(x),depth-1,alpha, beta, true);
+	
+				bestValue = Math.min(value, bestValue);
+				beta = Math.min(a,bestValue);
+				
+				if(beta < a)
+					break;
+				//insert alpha beta pruning
+				
+			}
+			n.val = bestValue;
+			return bestValue;
+			
+			
+		}
+		
+	}
+	
 	
 }
 
