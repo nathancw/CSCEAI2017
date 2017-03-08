@@ -512,7 +512,7 @@ class ChessState {
 	while(true){
 			
 		//Wait for player to make their next move by input....
-		System.out.print("\n Your Move: " );
+		System.out.print("\nYour Move: " );
 		String playerMove = "";
 		playerMove = reader.nextLine();
 		while(!validMove(playerMove)){
@@ -520,7 +520,7 @@ class ChessState {
 			System.out.print("Youre Move: ");
 			playerMove = reader.nextLine();
 		}
-		
+		System.out.println();
 		ChessState.ChessMove mPlayer = getMove(playerMove);
 
 		s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
@@ -540,17 +540,17 @@ class ChessState {
 					found = true;
 				
 				if(found){
-					System.out.println("Found best child at: " + x + " val: " + n.val);
+					//System.out.println("Found best child at: " + x + " val: " + n.val);
 					childNum = x;
 					x = root.children.size();
-					
 				}			
 			}
 			ChessState.ChessMove m1 = root.children.get(childNum).move;
-			System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
+			//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
 			
 			s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
 			s.printBoard(System.out);
+			
 			////////////////////////////////////
 			
 		
@@ -604,7 +604,7 @@ class ChessState {
 		m.ySource = s.charAt(1) - 49;
 		m.yDest = s.charAt(3) - 49;
 		
-		System.out.println(m.xSource + " , " + m.ySource + "  " + m.xDest + "," + m.yDest);
+		//System.out.println(m.xSource + " , " + m.ySource + "  " + m.xDest + "," + m.yDest);
 		
 		return m;
 	}
