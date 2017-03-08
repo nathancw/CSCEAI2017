@@ -469,8 +469,8 @@ class ChessState {
 		ChessState s = new ChessState();             // Make a new state
 		s.resetBoard();                              // Initialize to starting setup
 
-		int depth = 3;
-		
+		int depth = 4;
+		/*
 		ChessState.ChessMove mFirst = new ChessState.ChessMove();
 		mFirst.xSource = 6;
 		mFirst.ySource = 1;
@@ -480,7 +480,7 @@ class ChessState {
 		//Fools mate
 		s.move(mFirst.xSource, mFirst.ySource, mFirst.xDest, mFirst.yDest); //white
 		Node root = new Node(mFirst);
-		/*s.move(4, 6, 4, 5);//black
+		s.move(4, 6, 4, 5);//black
 		
 		//manually move the pawn up
 		ChessState.ChessMove mSecond = new ChessState.ChessMove();
@@ -489,11 +489,10 @@ class ChessState {
 		mSecond.xDest = 5;
 		mSecond.yDest = 2;
 		//s.move(5, 1, 5, 2);//white
-		boolean white = false;
 		//s.printBoard(System.out);
-		s.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move the board to the right state
+		s.move(mSecond.xSource, mSecond.ySource, mSecond.xDest, mSecond.yDest); //Move the board to the right state
 		
-		/*
+	/*	
 		s.move(3, 7, 7, 3); //Move queen to check mate - black
 		s.printBoard(System.out);
 		
@@ -502,18 +501,32 @@ class ChessState {
 		int h = s.heuristic(new Random()); //Find node value
 		System.out.println(h);	
 		
-		s.move(7, 3, 4, 0); //Take king - black - game over
-		h = s.heuristic(new Random()); //Find node value
-		System.out.println(h);	
+	//	s.move(7, 3, 4, 0); //Take king - black - game over
+	//	h = s.heuristic(new Random()); //Find node value
+	//	System.out.println(h);	
 		*/
 
 		Scanner reader = new Scanner(System.in); 
-		
-		//s.printBoard(System.out);
+		Node root;
+		s.printBoard(System.out);
 	while(true){
-		//s.printBoard(System.out);
-		//	Node root = new Node(m); //Create the new root node, PS BLACK HAS NEXT TURN
 			
+		//Wait for player to make their next move by input....
+		System.out.print("\n Your Move: " );
+		String playerMove = "";
+		playerMove = reader.nextLine();
+		while(!validMove(playerMove)){
+			System.out.println("Invalid input. Enter in  the form of: c2c3");
+			System.out.print("Youre Move: ");
+			playerMove = reader.nextLine();
+		}
+		
+		ChessState.ChessMove mPlayer = getMove(playerMove);
+
+		s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
+		root = new Node(mPlayer);
+		//////End player move
+		
 			////////////////////////
 			//Calculate computer move and move the board to that new state
 			computeTree(root,s,depth,false);
@@ -540,23 +553,7 @@ class ChessState {
 			s.printBoard(System.out);
 			////////////////////////////////////
 			
-			//Wait for player to make their next move by input....
-			System.out.print("\n Your Move: " );
-			String playerMove = "";
-			playerMove = reader.nextLine();
-			while(!validMove(playerMove)){
-				System.out.println("Invalid input. Enter in  the form of: c2c3");
-				System.out.print("Youre Move: ");
-				playerMove = reader.nextLine();
-			}
-			
-			ChessState.ChessMove mPlayer = getMove(playerMove);
-	
-			
-			//Fools mate
-			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
-			root = new Node(mPlayer);
-			
+		
 		
 		}
 	}
@@ -682,7 +679,7 @@ class ChessState {
 				int value = miniMax(n.children.get(x),depth-1,alpha, beta, true);
 	
 				bestValue = Math.min(value, bestValue);
-				beta = Math.min(a,bestValue);
+				beta = Math.min(b,bestValue);
 				
 				if(beta < a)
 					break;
