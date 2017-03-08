@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 class Node {
     List<Node> children = new ArrayList<Node>();
@@ -470,16 +471,23 @@ class ChessState {
 
 		int depth = 3;
 		
+		ChessState.ChessMove mFirst = new ChessState.ChessMove();
+		mFirst.xSource = 6;
+		mFirst.ySource = 1;
+		mFirst.xDest = 6;
+		mFirst.yDest = 3;
+		
 		//Fools mate
-		s.move(6, 1, 6, 3); //white
-		s.move(4, 6, 4, 5);//black
+		s.move(mFirst.xSource, mFirst.ySource, mFirst.xDest, mFirst.yDest); //white
+		Node root = new Node(mFirst);
+		/*s.move(4, 6, 4, 5);//black
 		
 		//manually move the pawn up
-		ChessState.ChessMove m = new ChessState.ChessMove();
-		m.xSource = 5;
-		m.ySource = 1;
-		m.xDest = 5;
-		m.yDest = 2;
+		ChessState.ChessMove mSecond = new ChessState.ChessMove();
+		mSecond.xSource = 5;
+		mSecond.ySource = 1;
+		mSecond.xDest = 5;
+		mSecond.yDest = 2;
 		//s.move(5, 1, 5, 2);//white
 		boolean white = false;
 		//s.printBoard(System.out);
@@ -498,36 +506,112 @@ class ChessState {
 		h = s.heuristic(new Random()); //Find node value
 		System.out.println(h);	
 		*/
-		
-		
-		
-		
-		Node root = new Node(m); //Create the new root node, PS BLACK HAS NEXT TURN
-		
-		computeTree(root,s,depth,white);
-		
-		int bestValue = miniMax(root,depth,-999,999,false); //Find the best move
-		int childNum = 0;
-		boolean found = false;
-		for(int x = 0;  x < root.children.size(); x++){
-			Node n = root.children.get(x);
-			if(n.val == bestValue)
-				found = true;
-			
-			if(found){
-				System.out.println("Found best child at: " + x + " val: " + n.val);
-				childNum = x;
-				x = root.children.size();
-				
-			}			
-		}
-		ChessState.ChessMove m1 = root.children.get(childNum).move;
-		System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
-		
-		s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
-		s.printBoard(System.out);
 
+		Scanner reader = new Scanner(System.in); 
+		
+		//s.printBoard(System.out);
+	while(true){
+		//s.printBoard(System.out);
+		//	Node root = new Node(m); //Create the new root node, PS BLACK HAS NEXT TURN
+			
+			////////////////////////
+			//Calculate computer move and move the board to that new state
+			computeTree(root,s,depth,false);
+			
+			int bestValue = miniMax(root,depth,-999,999,false); //Find the best move
+			int childNum = 0;
+			boolean found = false;
+			for(int x = 0;  x < root.children.size(); x++){
+				Node n = root.children.get(x);
+				if(n.val == bestValue)
+					found = true;
+				
+				if(found){
+					System.out.println("Found best child at: " + x + " val: " + n.val);
+					childNum = x;
+					x = root.children.size();
+					
+				}			
+			}
+			ChessState.ChessMove m1 = root.children.get(childNum).move;
+			System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
+			
+			s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
+			s.printBoard(System.out);
+			////////////////////////////////////
+			
+			//Wait for player to make their next move by input....
+			System.out.print("\n Your Move: " );
+			String playerMove = "";
+			playerMove = reader.nextLine();
+			while(!validMove(playerMove)){
+				System.out.println("Invalid input. Enter in  the form of: c2c3");
+				System.out.print("Youre Move: ");
+				playerMove = reader.nextLine();
+			}
+			
+			ChessState.ChessMove mPlayer = getMove(playerMove);
+	
+			
+			//Fools mate
+			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
+			root = new Node(mPlayer);
+			
+		
+		}
 	}
+	
+	private static boolean validMove(String playerMove) {
+		if(playerMove.length() < 4 || playerMove.length() > 5)
+			return false;
+		char arr[] = {'a','b','c','d','e','f','g','h'}; 
+		char c1 = playerMove.charAt(0);
+		char c2 = playerMove.charAt(1);
+		char c3 = playerMove.charAt(2);
+		char c4 = playerMove.charAt(3);
+		boolean valid1 = false;
+		boolean valid2 = false;
+		for(int x = 0; x < 8; x++){
+			if(c1 == arr[x])
+				valid1 = true;
+			 if(c3 == arr[x])
+				valid2 = true;
+		}
+		
+		if(!valid1)
+			return false;
+		if(!valid2)
+			return false;
+		//System.out.println("c2 - 49: " + (c2 - 49));
+		if(c2 - 49 < -1 || c2 - 49 > 8)
+			return false;
+		
+		
+		if(c4 - 49 < -1 || c4 - 49 > 8)
+			return false;
+		
+		return true;
+	}
+
+	static ChessState.ChessMove getMove(String s){
+		char arr[] = {'a','b','c','d','e','f','g','h'}; 
+		ChessState.ChessMove m = new ChessState.ChessMove();
+		
+		for(int x = 0; x < 8; x++){
+			if(s.charAt(0) == arr[x])
+				m.xSource = x;
+			 if(s.charAt(2) == arr[x])
+				m.xDest = x;
+		}
+		
+		m.ySource = s.charAt(1) - 49;
+		m.yDest = s.charAt(3) - 49;
+		
+		System.out.println(m.xSource + " , " + m.ySource + "  " + m.xDest + "," + m.yDest);
+		
+		return m;
+	}
+	
 	
 	static void computeTree(Node root,ChessState s, int depth, boolean white) throws Exception{
 		if(depth == 0)
@@ -539,9 +623,13 @@ class ChessState {
 		ChessState.ChessMove m;
 		
 		it = s.iterator(white); //Create new iterator
-		m = it.next(); //Find next move
+		if(it.hasNext())
+			m = it.next(); //Find next move
+		else
+			return;
+		
 		while(it.hasNext()) {
-
+			
 			ChessState newState = new ChessState(s); //Make new state
 			newState.move(m.xSource, m.ySource, m.xDest, m.yDest); //Move new state to the next move
 			
@@ -551,7 +639,7 @@ class ChessState {
 		    
 			computeTree(child, newState,depth,!white);
 		  
-		    System.out.println(h + " ");	
+		    //System.out.println(h + " ");	
 		
 			//newState.printBoard(System.out);
 			m = it.next();
