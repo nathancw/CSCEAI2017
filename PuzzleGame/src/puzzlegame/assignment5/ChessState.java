@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
+import javax.swing.JFrame;
+
 class Node {
     List<Node> children = new ArrayList<Node>();
     Node parent = null;
@@ -511,7 +513,28 @@ class ChessState {
 	//	h = s.heuristic(new Random()); //Find node value
 	//	System.out.println(h);	
 		*/
+		
+		////Setup GUI
+        ChessGUI cg = new ChessGUI();
 
+        JFrame f = new JFrame("ChessChamp");
+        f.add(cg.getGui());
+        // Ensures JVM closes after frame(s) closed and
+        // all non-daemon threads are finished
+        f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        // See http://stackoverflow.com/a/7143398/418556 for demo.
+        f.setLocationByPlatform(true);
+
+        // ensures the frame is the minimum size it needs to be
+        // in order display the components within it
+        f.pack();
+        // ensures the minimum size is enforced.
+        f.setMinimumSize(f.getSize());
+        f.setVisible(true);
+		////End GUI Setup
+        
+        
+        //Variable declaration
 		Scanner reader = new Scanner(System.in); 
 		String blankMove = "a1a1";
 		ChessState.ChessMove blankM = getMove(blankMove);
@@ -520,8 +543,9 @@ class ChessState {
 		int bestValue;
 		int childNum = 0;
 		boolean found = false;
+		boolean playing = false;
 		
-	while(true){
+	while(playing){
 		
 		if(human){
 			//Wait for player to make their next move by input....
@@ -539,7 +563,7 @@ class ChessState {
 			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
 			root = new Node(mPlayer);
 			//////End player move
-			////////////////////////
+			///////////////////////////// - HUMAN
 		}
 		else {
 		
@@ -593,7 +617,7 @@ class ChessState {
 		s.move(m2.xSource, m2.ySource, m2.xDest, m2.yDest);
 		s.printBoard(System.out);
 		root = new Node(m2);
-		////////////////////////////////////
+		//////////////////////////////////// - AI 2
 		
 	
 		
