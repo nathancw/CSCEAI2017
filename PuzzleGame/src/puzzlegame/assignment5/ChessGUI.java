@@ -2,9 +2,14 @@ package puzzlegame.assignment5;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.imageio.ImageIO;
 
 public class ChessGUI {
@@ -13,7 +18,10 @@ public class ChessGUI {
     private JButton[][] chessBoardSquares = new JButton[8][8];
     private Image[][] chessPieceImages = new Image[2][6];
     private JPanel chessBoard;
-    private final JLabel message = new JLabel(
+    Map<Integer,Image> whiteImage = new HashMap();
+    Map<Integer,Image> blackImage = new HashMap();
+    int pieceMask[] = {6,5,2,3,4,1};
+     private final JLabel message = new JLabel(
             "Chess Champ is ready to play!");
     private static final String COLS = "ABCDEFGH";
     public static final int QUEEN = 0, KING = 1,
@@ -29,7 +37,7 @@ public class ChessGUI {
 
     public final void initializeGui() {
         // create the images for the chess pieces
-//        createImages();
+        createImages();
 
         // set up the main GUI
         gui.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -40,9 +48,11 @@ public class ChessGUI {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                setupNewGame();
+             //   setupNewGame();
             }
         };
+        
+  //      setupNewGame();
         tools.add(newGameAction);
         tools.add(new JButton("Save")); // TODO - add functionality!
         tools.add(new JButton("Restore")); // TODO - add functionality!
@@ -50,7 +60,7 @@ public class ChessGUI {
         tools.add(new JButton("Resign")); // TODO - add functionality!
         tools.addSeparator();
         tools.add(message);
-
+        
         gui.add(new JLabel("?"), BorderLayout.LINE_START);
 
         chessBoard = new JPanel(new GridLayout(0, 9)) {
@@ -139,6 +149,7 @@ public class ChessGUI {
                 }
             }
         }
+        setupNewGame();
     }
 
     public final JComponent getGui() {
@@ -147,12 +158,21 @@ public class ChessGUI {
 
     private final void createImages() {
         try {
-            URL url = new URL("http://i.stack.imgur.com/memI0.png");
-            BufferedImage bi = ImageIO.read(url);
+           // URL url = new URL("http://i.stack.imgur.com/memI0.png");
+        //    Image URL = new Image()
+        	BufferedImage bi = ImageIO.read(new File("chessPieces.png"));
             for (int ii = 0; ii < 2; ii++) {
                 for (int jj = 0; jj < 6; jj++) {
                     chessPieceImages[ii][jj] = bi.getSubimage(
                             jj * 64, ii * 64, 64, 64);
+                
+                    if(ii==1)
+                    	blackImage.put(pieceMask[jj],bi.getSubimage(
+                                jj * 64, ii * 64, 64, 64));
+                    else
+                    	whiteImage.put(pieceMask[jj],bi.getSubimage(
+                                jj * 64, ii * 64, 64, 64));
+                    	
                 }
             }
         } catch (Exception e) {
@@ -185,6 +205,26 @@ public class ChessGUI {
                     chessPieceImages[WHITE][STARTING_ROW[ii]]));
         }
     }
+    
+    public void changeBoard(ChessState s){
+           // set up the black pieces
+    		
+ //   	 for(int r = 0; r < 8; r++)
+  //       	for(int c = 0; c < 8; c++)
+  //       		System.out.println("Piece value at " + c + "," + r + " : " + s.getPiece(c,r));
+         
+    	
+           for (int r = 0; r < 8; r++) 
+        	   for(int c =0 ; c < 8;){
+        		   if(s.isWhite(c,r))
+        			   chessBoardSquares[r][c].setIcon(new ImageIcon(whiteImage.get(s.getPiece(c, r))));
+        		   else
+        			   chessBoardSquares[r][c].setIcon(new ImageIcon(blackImage.get(s.getPiece(c, r))));
+        		   //else
+        			   
+           }
+    }
+    
     public static void startGUI(){
     	 Runnable r = new Runnable() {
 

@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 class Node {
     List<Node> children = new ArrayList<Node>();
@@ -464,9 +465,28 @@ class ChessState {
 			return m;
 		}
 	}
-
-
 	public static void main(String[] args) throws Exception {
+	/*	 Runnable r = new Runnable() {
+
+             @Override
+             public void run() {
+               try {
+				play();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+             }
+         };
+      */   
+         play();
+         // Swing GUIs should be created and updated on the EDT
+         // http://docs.oracle.com/javase/tutorial/uiswing/concurrency
+        // SwingUtilities.invokeLater(r);	
+	}
+
+	
+	public static void play() throws Exception {
 		
 		ChessState s = new ChessState();             // Make a new state
 		s.resetBoard();                              // Initialize to starting setup
@@ -514,9 +534,9 @@ class ChessState {
 	//	System.out.println(h);	
 		*/
 		
-		////Setup GUI
+		/*////Setup GUI
         ChessGUI cg = new ChessGUI();
-
+        
         JFrame f = new JFrame("ChessChamp");
         f.add(cg.getGui());
         // Ensures JVM closes after frame(s) closed and
@@ -532,7 +552,8 @@ class ChessState {
         f.setMinimumSize(f.getSize());
         f.setVisible(true);
 		////End GUI Setup
-        
+        */
+  
         
         //Variable declaration
 		Scanner reader = new Scanner(System.in); 
@@ -543,7 +564,7 @@ class ChessState {
 		int bestValue;
 		int childNum = 0;
 		boolean found = false;
-		boolean playing = false;
+		boolean playing = true;
 		
 	while(playing){
 		
@@ -590,6 +611,7 @@ class ChessState {
 			s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
 			s.printBoard(System.out);
 			root = new Node(m1);
+			cg.changeBoard(s);
 			//////////////////////////////////// - AI 1
 		}
 		
