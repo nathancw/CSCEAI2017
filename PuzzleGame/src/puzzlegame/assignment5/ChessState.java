@@ -492,47 +492,13 @@ class ChessState {
 		s.resetBoard();                              // Initialize to starting setup
 
 	
-		int depth1 = 4;
-		int depth2 = 3;
+		int depth1 = 3;
+		int depth2 = 5;
 		boolean human = false;
 		if(depth1 == 0){
 			human = true;
 		}
-		/*
-		ChessState.ChessMove mFirst = new ChessState.ChessMove();
-		mFirst.xSource = 6;
-		mFirst.ySource = 1;
-		mFirst.xDest = 6;
-		mFirst.yDest = 3;
-		
-		//Fools mate
-		s.move(mFirst.xSource, mFirst.ySource, mFirst.xDest, mFirst.yDest); //white
-		Node root = new Node(mFirst);
-		s.move(4, 6, 4, 5);//black
-		
-		//manually move the pawn up
-		ChessState.ChessMove mSecond = new ChessState.ChessMove();
-		mSecond.xSource = 5;
-		mSecond.ySource = 1;
-		mSecond.xDest = 5;
-		mSecond.yDest = 2;
-		//s.move(5, 1, 5, 2);//white
-		//s.printBoard(System.out);
-		s.move(mSecond.xSource, mSecond.ySource, mSecond.xDest, mSecond.yDest); //Move the board to the right state
-		
-	/*	
-		s.move(3, 7, 7, 3); //Move queen to check mate - black
-		s.printBoard(System.out);
-		
-		s.move(4, 1, 4, 2); //move random pawn - white
-		s.printBoard(System.out);
-		int h = s.heuristic(new Random()); //Find node value
-		System.out.println(h);	
-		
-	//	s.move(7, 3, 4, 0); //Take king - black - game over
-	//	h = s.heuristic(new Random()); //Find node value
-	//	System.out.println(h);	
-		*/
+
 		
 		/*////Setup GUI
         ChessGUI cg = new ChessGUI();
@@ -611,7 +577,7 @@ class ChessState {
 			s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
 			s.printBoard(System.out);
 			root = new Node(m1);
-			cg.changeBoard(s);
+			//cg.changeBoard(s);
 			//////////////////////////////////// - AI 1
 		}
 		
@@ -756,6 +722,7 @@ class ChessState {
 				bestValue = Math.max(value, bestValue);
 				alpha = Math.max(a,bestValue);
 				
+			//	System.out.println("white bestVal: " + bestValue + " " + b + " < " + alpha);
 				if(b < alpha)
 					break; //MAYBE ONLY RETURN?
 				
@@ -772,6 +739,7 @@ class ChessState {
 				bestValue = Math.min(value, bestValue);
 				beta = Math.min(b,bestValue);
 				
+			//	System.out.println("black bestVal: " + bestValue + " " + beta + " < " + a);
 				if(beta < a)
 					break;
 				//insert alpha beta pruning
@@ -788,6 +756,40 @@ class ChessState {
 	
 }
 
+/*
+ChessState.ChessMove mFirst = new ChessState.ChessMove();
+mFirst.xSource = 6;
+mFirst.ySource = 1;
+mFirst.xDest = 6;
+mFirst.yDest = 3;
 
+//Fools mate
+s.move(mFirst.xSource, mFirst.ySource, mFirst.xDest, mFirst.yDest); //white
+Node root = new Node(mFirst);
+s.move(4, 6, 4, 5);//black
+
+//manually move the pawn up
+ChessState.ChessMove mSecond = new ChessState.ChessMove();
+mSecond.xSource = 5;
+mSecond.ySource = 1;
+mSecond.xDest = 5;
+mSecond.yDest = 2;
+//s.move(5, 1, 5, 2);//white
+//s.printBoard(System.out);
+s.move(mSecond.xSource, mSecond.ySource, mSecond.xDest, mSecond.yDest); //Move the board to the right state
+
+/*	
+s.move(3, 7, 7, 3); //Move queen to check mate - black
+s.printBoard(System.out);
+
+s.move(4, 1, 4, 2); //move random pawn - white
+s.printBoard(System.out);
+int h = s.heuristic(new Random()); //Find node value
+System.out.println(h);	
+
+//	s.move(7, 3, 4, 0); //Take king - black - game over
+//	h = s.heuristic(new Random()); //Find node value
+//	System.out.println(h);	
+*/
 
 
