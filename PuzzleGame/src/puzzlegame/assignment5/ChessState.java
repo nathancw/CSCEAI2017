@@ -346,6 +346,7 @@ class ChessState {
 		setPiece(xDest, yDest, p, white);
 		setPiece(xSrc, ySrc, None, true);
 		if(target == King) {
+		
 			// If you take the opponent's king, remove all of the opponent's pieces. This
 			// makes sure that look-ahead strategies don't try to look beyond the end of
 			// the game (example: sacrifice a king for a king and some other piece.)
@@ -492,8 +493,8 @@ class ChessState {
 		s.resetBoard();                              // Initialize to starting setup
 
 	
-		int depth1 = 3;
-		int depth2 = 5;
+		int depth1 = 4;
+		int depth2 = 3;
 		boolean human = false;
 		if(depth1 == 0){
 			human = true;
@@ -539,6 +540,11 @@ class ChessState {
 			System.out.print("\nYour Move: " );
 			String playerMove = "";
 			playerMove = reader.nextLine();
+			if(playerMove.charAt(0) == 'q'){
+				System.out.println("Quitting. Thanks for playing!");
+				break;
+			}
+			
 			while(!validMove(playerMove)){
 				System.out.println("Invalid input. Enter in  the form of: c2c3");
 				System.out.print("Youre Move: ");
@@ -566,7 +572,7 @@ class ChessState {
 					found = true;
 				
 				if(found){
-					//System.out.println("Found best child at: " + x + " val: " + n.val);
+				//	System.out.println("Found best child at: " + x + " val: " + n.val);
 					childNum = x;
 					x = root.children.size();
 				}			
@@ -574,8 +580,13 @@ class ChessState {
 			ChessState.ChessMove m1 = root.children.get(childNum).move;
 			//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
 			
-			s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);
+			boolean won = s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);			
 			s.printBoard(System.out);
+			if(won){
+				System.out.println("Game over. White Wins." );
+				break;
+			}
+			
 			root = new Node(m1);
 			//cg.changeBoard(s);
 			//////////////////////////////////// - AI 1
@@ -594,7 +605,7 @@ class ChessState {
 				found = true;
 			
 			if(found){
-				//System.out.println("Found best child at: " + x + " val: " + n.val);
+				System.out.println("Found best child at: " + x + " val: " + n.val);
 				childNum = x;
 				x = root.children.size();
 			}			
@@ -602,8 +613,13 @@ class ChessState {
 		ChessState.ChessMove m2 = root.children.get(childNum).move;
 		//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
 		
-		s.move(m2.xSource, m2.ySource, m2.xDest, m2.yDest);
+		boolean won = s.move(m2.xSource, m2.ySource, m2.xDest, m2.yDest);
+	
 		s.printBoard(System.out);
+		if(won){
+			System.out.println("Game over. Black Wins." );
+			break;
+		}
 		root = new Node(m2);
 		//////////////////////////////////// - AI 2
 		
