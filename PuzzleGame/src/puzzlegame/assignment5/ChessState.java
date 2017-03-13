@@ -475,10 +475,12 @@ class ChessState {
 	
 		int depth1 = Integer.parseInt(args[0]);
 		int depth2 = Integer.parseInt(args[1]);
-		boolean human = false;
-		if(depth1 == 0){
-			human = true;
-		}
+		boolean human1 = false;
+		boolean human2 = false;
+		if(depth1 == 0 )
+			human1 = true;
+		else if(depth2 == 0)
+			human2 = true;
 
 		
 		/*////Setup GUI
@@ -515,31 +517,8 @@ class ChessState {
 		
 	while(playing){
 		
-		if(human){
-			//Wait for player to make their next move by input....
-			System.out.print("\nYour Move: " );
-			String playerMove = "";
-			playerMove = reader.nextLine();
-			if(playerMove.charAt(0) == 'q'){
-				System.out.println("Quitting. Thanks for playing!");
-				break;
-			}
+		if(human2) {
 			
-			while(!validMove(playerMove)){
-				System.out.println("Invalid input. Enter in  the form of: c2c3");
-				System.out.print("Youre Move: ");
-				playerMove = reader.nextLine();
-			}
-			System.out.println();
-			ChessState.ChessMove mPlayer = getMove(playerMove);
-	
-			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
-			root = new Node(mPlayer);
-			//////End player move
-			///////////////////////////// - HUMAN
-		}
-		else {
-		
 			//Calculate computer move and move the board to that new state
 			computeTree(root,s,depth1,true);
 			
@@ -570,41 +549,156 @@ class ChessState {
 			root = new Node(m1);
 			//cg.changeBoard(s);
 			//////////////////////////////////// - AI 1
-		}
-		
-		////////////////////////
-		//Calculate computer move and move the board to that new state
-		computeTree(root,s,depth2,false);
-		
-		bestValue = miniMax(root,depth2,-999,999,false); //Find the best move
-		childNum = 0;
-		found = false;
-		for(int x = 0;  x < root.children.size(); x++){
-			Node n = root.children.get(x);
-			if(n.val == bestValue)
-				found = true;
 			
-			if(found){
-			//	System.out.println("Found best child at: " + x + " val: " + n.val);
-				childNum = x;
-				x = root.children.size();
-			}			
-		}
-		ChessState.ChessMove m2 = root.children.get(childNum).move;
-		//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
-		
-		boolean won = s.move(m2.xSource, m2.ySource, m2.xDest, m2.yDest);
+			//Wait for player to make their next move by input....
+			System.out.print("\nYour Move: " );
+			String playerMove = "";
+			playerMove = reader.nextLine();
+			if(playerMove.charAt(0) == 'q'){
+				System.out.println("Quitting. Thanks for playing!");
+				break;
+			}
+			
+			while(!validMove(playerMove)){
+				System.out.println("Invalid input. Enter in  the form of: c2c3");
+				System.out.print("Youre Move: ");
+				playerMove = reader.nextLine();
+			}
+			System.out.println();
+			ChessState.ChessMove mPlayer = getMove(playerMove);
 	
-		s.printBoard(System.out);
-		if(won){
-			System.out.println("Game over. Black Wins." );
-			break;
-		}
-		root = new Node(m2);
-		//////////////////////////////////// - AI 2
+			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
+			root = new Node(mPlayer);
+			s.printBoard(System.out);
+			//////End player move
+			///////////////////////////// - HUMAN 1
+			
+		}////END HUMAN 2 ie 5 0 
 		
+		else if(human1){
+			//Wait for player to make their next move by input....
+			System.out.print("\nYour Move: " );
+			String playerMove = "";
+			playerMove = reader.nextLine();
+			if(playerMove.charAt(0) == 'q'){
+				System.out.println("Quitting. Thanks for playing!");
+				break;
+			}
+			
+			while(!validMove(playerMove)){
+				System.out.println("Invalid input. Enter in  the form of: c2c3");
+				System.out.print("Your Move: ");
+				playerMove = reader.nextLine();
+			}
+			System.out.println();
+			ChessState.ChessMove mPlayer = getMove(playerMove);
 	
+			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
+			root = new Node(mPlayer);
+			s.printBoard(System.out);
+			//////End player move
+			///////////////////////////// - HUMAN 1
+			
+			////////////////////////
+				//Calculate computer move and move the board to that new state
+				computeTree(root,s,depth2,false);
+				
+				bestValue = miniMax(root,depth2,-999,999,false); //Find the best move
+				childNum = 0;
+				found = false;
+				for(int x = 0;  x < root.children.size(); x++){
+					Node n = root.children.get(x);
+					if(n.val == bestValue)
+						found = true;
+					
+					if(found){
+					//	System.out.println("Found best child at: " + x + " val: " + n.val);
+						childNum = x;
+						x = root.children.size();
+					}			
+				}
+				ChessState.ChessMove m2 = root.children.get(childNum).move;
+				//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
+				
+				boolean won = s.move(m2.xSource, m2.ySource, m2.xDest, m2.yDest);
+			
+				s.printBoard(System.out);
+				if(won){
+					System.out.println("Game over. Black Wins." );
+					break;
+				}
+				root = new Node(m2);
+				//////////////////////////////////// - AI 2
+				
+		}
+		else {
+			
+			//Calculate computer move and move the board to that new state
+			computeTree(root,s,depth1,true);
+			
+			bestValue = miniMax(root,depth1,-999,999,true); //Find the best move
+			childNum = 0;
+			found = false;
+			for(int x = 0;  x < root.children.size(); x++){
+				Node n = root.children.get(x);
+				if(n.val == bestValue)
+					found = true;
+				
+				if(found){
+				//	System.out.println("Found best child at: " + x + " val: " + n.val);
+					childNum = x;
+					x = root.children.size();
+				}			
+			}
+			ChessState.ChessMove m1 = root.children.get(childNum).move;
+			//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
+			
+			boolean won = s.move(m1.xSource, m1.ySource, m1.xDest, m1.yDest);			
+			s.printBoard(System.out);
+			if(won){
+				System.out.println("Game over. White Wins." );
+				break;
+			}
+			
+			root = new Node(m1);
+			//cg.changeBoard(s);
+			//////////////////////////////////// - AI 1
 		
+		
+			////////////////////////
+			//Calculate computer move and move the board to that new state
+			computeTree(root,s,depth2,false);
+			
+			bestValue = miniMax(root,depth2,-999,999,false); //Find the best move
+			childNum = 0;
+			found = false;
+			for(int x = 0;  x < root.children.size(); x++){
+				Node n = root.children.get(x);
+				if(n.val == bestValue)
+					found = true;
+				
+				if(found){
+				//	System.out.println("Found best child at: " + x + " val: " + n.val);
+					childNum = x;
+					x = root.children.size();
+				}			
+			}
+			ChessState.ChessMove m2 = root.children.get(childNum).move;
+			//System.out.println(" m1.xS "  + m1.xSource + " m1.yS " + m1.ySource + " m1.xDest: " + m1.xDest + " m1.yDest: " + m1.yDest);
+			
+			 won = s.move(m2.xSource, m2.ySource, m2.xDest, m2.yDest);
+		
+			s.printBoard(System.out);
+			if(won){
+				System.out.println("Game over. Black Wins." );
+				break;
+			}
+			root = new Node(m2);
+			//////////////////////////////////// - AI 2
+			
+			
+			}///END BOTH AI PLAYING
+			
 		}
 	}
 	
