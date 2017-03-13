@@ -479,7 +479,7 @@ class ChessState {
 		boolean human2 = false;
 		if(depth1 == 0 )
 			human1 = true;
-		else if(depth2 == 0)
+		if(depth2 == 0)
 			human2 = true;
 
 		
@@ -517,7 +517,7 @@ class ChessState {
 		
 	while(playing){
 		
-		if(human2) {
+		if(human2 && !human1) {
 			
 			//Calculate computer move and move the board to that new state
 			computeTree(root,s,depth1,true);
@@ -575,7 +575,7 @@ class ChessState {
 			
 		}////END HUMAN 2 ie 5 0 
 		
-		else if(human1){
+		else if(human1 &&!human2){
 			//Wait for player to make their next move by input....
 			System.out.print("\nYour Move: " );
 			String playerMove = "";
@@ -631,7 +631,7 @@ class ChessState {
 				//////////////////////////////////// - AI 2
 				
 		}
-		else {
+		else if(!human1 && !human2) {
 			
 			//Calculate computer move and move the board to that new state
 			computeTree(root,s,depth1,true);
@@ -698,6 +698,56 @@ class ChessState {
 			
 			
 			}///END BOTH AI PLAYING
+		else{
+			//Wait for player to make their next move by input....
+			System.out.print("\nWhite Move: " );
+			String playerMove = "";
+			playerMove = reader.nextLine();
+			if(playerMove.charAt(0) == 'q'){
+				System.out.println("Quitting. Thanks for playing!");
+				break;
+			}
+			
+			while(!validMove(playerMove)){
+				System.out.println("Invalid input. Enter in  the form of: c2c3");
+				System.out.print("White Move: ");
+				playerMove = reader.nextLine();
+			}
+			System.out.println();
+			ChessState.ChessMove mPlayer = getMove(playerMove);
+	
+			s.move(mPlayer.xSource, mPlayer.ySource, mPlayer.xDest, mPlayer.yDest); //white
+			root = new Node(mPlayer);
+			s.printBoard(System.out);
+			//////End player move
+			///////////////////////////// - HUMAN 1
+			
+			//Wait for player to make their next move by input....
+			System.out.print("\nBlack Move: " );
+			playerMove = "";
+			playerMove = reader.nextLine();
+			if(playerMove.charAt(0) == 'q'){
+				System.out.println("Quitting. Thanks for playing!");
+				break;
+			}
+			
+			while(!validMove(playerMove)){
+				System.out.println("Invalid input. Enter in  the form of: c2c3");
+				System.out.print("Black Move: ");
+				playerMove = reader.nextLine();
+			}
+			System.out.println();
+			ChessState.ChessMove mPlayer2 = getMove(playerMove);
+	
+			s.move(mPlayer2.xSource, mPlayer2.ySource, mPlayer2.xDest, mPlayer2.yDest); //white
+			root = new Node(mPlayer);
+			s.printBoard(System.out);
+			//////End player move
+			///////////////////////////// - HUMAN 2
+			
+			
+			
+		}//end both players
 			
 		}
 	}
