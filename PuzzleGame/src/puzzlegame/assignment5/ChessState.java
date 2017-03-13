@@ -466,35 +466,15 @@ class ChessState {
 			return m;
 		}
 	}
-	public static void main(String[] args) throws Exception {
-	/*	 Runnable r = new Runnable() {
-
-             @Override
-             public void run() {
-               try {
-				play();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-             }
-         };
-      */   
-         play();
-         // Swing GUIs should be created and updated on the EDT
-         // http://docs.oracle.com/javase/tutorial/uiswing/concurrency
-        // SwingUtilities.invokeLater(r);	
-	}
-
 	
-	public static void play() throws Exception {
+	public static void main(String[] args) throws Exception {
 		
 		ChessState s = new ChessState();             // Make a new state
 		s.resetBoard();                              // Initialize to starting setup
 
 	
-		int depth1 = 4;
-		int depth2 = 3;
+		int depth1 = Integer.parseInt(args[0]);
+		int depth2 = Integer.parseInt(args[1]);
 		boolean human = false;
 		if(depth1 == 0){
 			human = true;
@@ -605,7 +585,7 @@ class ChessState {
 				found = true;
 			
 			if(found){
-				System.out.println("Found best child at: " + x + " val: " + n.val);
+			//	System.out.println("Found best child at: " + x + " val: " + n.val);
 				childNum = x;
 				x = root.children.size();
 			}			
