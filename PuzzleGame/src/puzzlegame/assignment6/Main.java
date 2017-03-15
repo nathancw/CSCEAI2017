@@ -37,3 +37,49 @@ class Main
 		//testLearner(new RandomForest(50));
 	}
 }
+
+abstract class Node
+{
+	abstract boolean isLeaf();
+}
+
+class InteriorNode extends Node
+{
+	int attribute; // which attribute to divide on
+	double pivot; // which value to divide on
+	Node a;
+	Node b;
+
+	boolean isLeaf() { return false; }
+}
+
+class LeafNode extends Node
+{
+	double[] label;
+
+	boolean isLeaf() { return true; }
+}
+
+class DecisionTree extends SupervisedLearner
+{
+	Node root;
+
+	@Override
+	String name() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	void train(Matrix features, Matrix labels) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	void predict(double[] in, double[] out) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
