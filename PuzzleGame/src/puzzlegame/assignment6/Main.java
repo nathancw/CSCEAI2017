@@ -1,4 +1,7 @@
 package puzzlegame.assignment6;
+
+import java.util.Random;
+
 class Main
 {
 	static void test(SupervisedLearner learner, String challenge)
@@ -63,17 +66,57 @@ class LeafNode extends Node
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
-
+	Random rand;
+	
 	@Override
 	String name() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	Node buildTree(Matrix features, Matrix labels){
+		InteriorNode n = new InteriorNode();
+		rand = new Random();
+		int splitCol = rand.nextInt(features.cols());
+		int randRow = rand.nextInt(features.rows());
+		double splitVal = features.row(randRow)[splitCol]; //splits on that column for that random row
+		
+		Matrix af = new Matrix();
+		af.copyMetaData(features);
+		Matrix bf = new Matrix();
+		bf.copyMetaData(features);
+		
+		Matrix al = new Matrix();
+		al.copyMetaData(labels);
+		Matrix bl = new Matrix();
+		bl.copyMetaData(labels);
+		
+		for(int i = 0; i < features.rows(); i++){
+			if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
+				Vec.copy(af.newRow(), features.row(i));
+				Vec.copy(al.newRow(), labels.row(i));
+			}
+			else
+			{
+				Vec.copy(bf.newRow(), features.row(i));
+				Vec.copy(bl.newRow(), labels.row(i));
+			}
+	
+		}
+		
+		//Store the values in a new node
+		n.attribute = splitCol;
+	    n.pivot = splitVal;
+	    n.a = buildTree(af,al);
+	    n.b = buildTree(bf,bl);
+		
+		return n;
+	}
+	
 	@Override
 	void train(Matrix features, Matrix labels) {
-		// TODO Auto-generated method stub
 		
+		root = buildTree(features, labels);
 	}
 
 	@Override
