@@ -1,5 +1,6 @@
 package puzzlegame.assignment6;
 
+import java.util.Arrays;
 import java.util.Random;
 
 class Main
@@ -30,13 +31,14 @@ class Main
 	public static void testLearner(SupervisedLearner learner)
 	{
 		test(learner, "hep");
-		test(learner, "vow");
-		test(learner, "soy");
+	//	test(learner, "vow");
+	//	test(learner, "soy");
 	}
 
 	public static void main(String[] args)
 	{
-		testLearner(new BaselineLearner());
+		//testLearner(new BaselineLearner());
+		testLearner(new DecisionTree());
 		//testLearner(new RandomForest(50));
 	}
 }
@@ -70,16 +72,30 @@ class DecisionTree extends SupervisedLearner
 	
 	@Override
 	String name() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		return "DecisionTree";
 	}
 	
 	Node buildTree(Matrix features, Matrix labels){
+		
+		//If we have no more rows left
+		if(features.rows() <= 1 || features.cols() <= 1){
+			LeafNode leaf = new LeafNode();
+			leaf.label = computeLabel(labels);
+			return leaf;
+			
+		}
+		
+	
+		System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
+		
 		InteriorNode n = new InteriorNode();
 		rand = new Random();
 		int splitCol = rand.nextInt(features.cols());
 		int randRow = rand.nextInt(features.rows());
 		double splitVal = features.row(randRow)[splitCol]; //splits on that column for that random row
+		
+		System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
 		
 		Matrix af = new Matrix();
 		af.copyMetaData(features);
@@ -92,6 +108,10 @@ class DecisionTree extends SupervisedLearner
 		bl.copyMetaData(labels);
 		
 		for(int i = 0; i < features.rows(); i++){
+			
+			
+			//NOTE THIS SPLITTING IS ONLY FOR CONTINUOUS DATA. We need to change to categorical data.
+			System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
 			if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
 				Vec.copy(af.newRow(), features.row(i));
 				Vec.copy(al.newRow(), labels.row(i));
@@ -113,6 +133,20 @@ class DecisionTree extends SupervisedLearner
 		return n;
 	}
 	
+	double[] computeLabel(Matrix labels){
+		
+		double[] mode = new double[labels.cols()];
+		for(int i = 0; i < labels.cols(); i++)
+		{
+			if(labels.valueCount(i) == 0)
+				mode[i] = labels.columnMean(i);
+			else
+				mode[i] = labels.mostCommonValue(i);
+		}
+		return mode;
+	}
+	
+	
 	@Override
 	void train(Matrix features, Matrix labels) {
 		
@@ -121,7 +155,25 @@ class DecisionTree extends SupervisedLearner
 
 	@Override
 	void predict(double[] in, double[] out) {
-		// TODO Auto-generated method stub
+		
+		System.out.println("Predicting. In: " + Arrays.toString(in) + " out: " + Arrays.toString(out));
+		InteriorNode n = (InteriorNode) root;
+		
+		while(!n.isLeaf()){
+			if(n.a.isLeaf()){
+				LeafNode leaf = (LeafNode) n.a;
+				Vec.copy(out,leaf.label);
+				break;
+			}
+			else
+				n = (InteriorNode) n.a;
+				
+		}
+
+		
+		System.out.println("Found leaf.");
+		
+	//	Vec.copy(out, mode);
 		
 	}
 
