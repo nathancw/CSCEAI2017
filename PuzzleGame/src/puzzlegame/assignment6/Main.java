@@ -31,8 +31,8 @@ class Main
 	public static void testLearner(SupervisedLearner learner)
 	{
 		test(learner, "hep");
-	//	test(learner, "vow");
-	//	test(learner, "soy");
+		test(learner, "vow");
+		//test(learner, "soy");
 	}
 
 	public static void main(String[] args)
@@ -68,7 +68,7 @@ class LeafNode extends Node
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
-	Random rand;
+	Random rand = new Random();
 	
 	@Override
 	String name() {
@@ -87,15 +87,15 @@ class DecisionTree extends SupervisedLearner
 		}
 		
 	
-		System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
+		//System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
 		
 		InteriorNode n = new InteriorNode();
-		rand = new Random();
+		
 		int splitCol = rand.nextInt(features.cols());
 		int randRow = rand.nextInt(features.rows());
 		double splitVal = features.row(randRow)[splitCol]; //splits on that column for that random row
 		
-		System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
+		//System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
 		
 		Matrix af = new Matrix();
 		af.copyMetaData(features);
@@ -111,7 +111,7 @@ class DecisionTree extends SupervisedLearner
 			
 			
 			//NOTE THIS SPLITTING IS ONLY FOR CONTINUOUS DATA. We need to change to categorical data.
-			System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
+			//System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
 			if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
 				Vec.copy(af.newRow(), features.row(i));
 				Vec.copy(al.newRow(), labels.row(i));
@@ -124,6 +124,7 @@ class DecisionTree extends SupervisedLearner
 	
 		}
 		
+		System.out.println("n.attribute: " + splitCol + " n.pivot: " + splitVal);
 		//Store the values in a new node
 		n.attribute = splitCol;
 	    n.pivot = splitVal;
@@ -156,25 +157,78 @@ class DecisionTree extends SupervisedLearner
 	@Override
 	void predict(double[] in, double[] out) {
 		
-		System.out.println("Predicting. In: " + Arrays.toString(in) + " out: " + Arrays.toString(out));
+	//	System.out.println("Predicting. In: " + Arrays.toString(in) + " out: " + Arrays.toString(out));
 		InteriorNode n = (InteriorNode) root;
 		
 		while(!n.isLeaf()){
-			if(n.a.isLeaf()){
-				LeafNode leaf = (LeafNode) n.a;
-				Vec.copy(out,leaf.label);
-				break;
-			}
-			else
-				n = (InteriorNode) n.a;
+						
+				if(in[n.attribute] < n.pivot){
+					//Check if its leaf node before we move...
+					if(n.a.isLeaf()){
+						LeafNode leaf = (LeafNode) n.a;
+						Vec.copy(out,leaf.label);
+						break;
+					}
+					else
+						n = (InteriorNode) n.a;
+				}
+				else{
+					
+					if(n.b.isLeaf()){
+						LeafNode leaf = (LeafNode) n.b;
+						Vec.copy(out,leaf.label);
+						break;
+					}
+					else
+						n = (InteriorNode) n.b;
+				}
+				//System.out.println("Parent: " + n.attribute);
+				//n = (InteriorNode) n.b;
+				//System.out.println(" a: " + n.attribute);
 				
 		}
+		
 
 		
-		System.out.println("Found leaf.");
+		//System.out.println("Found leaf.");
 		
 	//	Vec.copy(out, mode);
 		
 	}
 
+}
+
+class RandomForest extends SupervisedLearner
+{
+	int n;
+	
+	RandomForest(int n){
+		this.n = n;
+	}
+	
+	@Override
+	String name() {
+		return "Random Forest";
+	}
+
+	@Override
+	void train(Matrix features, Matrix labels) {
+		//Create and train n decision trees
+		DecisionTree tree[] = new DecisionTree[n];
+		
+		for(int x = 0; x < n; x++){
+			tree[x].train(features, labels);
+		}
+		
+	}
+
+	@Override
+	void predict(double[] in, double[] out) {
+		//HOW DO I PREDICT? THIS GETS CALLED FROM learner.countmissclassifications(...) like a hundred times.
+		
+	}
+	
+	
+	
+	
 }
