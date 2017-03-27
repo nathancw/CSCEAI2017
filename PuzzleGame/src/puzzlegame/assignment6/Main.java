@@ -109,7 +109,7 @@ class DecisionTree extends SupervisedLearner
 		
 		for(int i = 0; i < features.rows(); i++){
 			
-			
+			System.out.println("val: " + features.valueCount((int)features.row(i)[splitCol]));
 			//NOTE THIS SPLITTING IS ONLY FOR CONTINUOUS DATA. We need to change to categorical data.
 			//System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
 			if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
@@ -124,7 +124,7 @@ class DecisionTree extends SupervisedLearner
 	
 		}
 		
-		System.out.println("n.attribute: " + splitCol + " n.pivot: " + splitVal);
+		//System.out.println("n.attribute: " + splitCol + " n.pivot: " + splitVal);
 		//Store the values in a new node
 		n.attribute = splitCol;
 	    n.pivot = splitVal;
