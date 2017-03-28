@@ -201,7 +201,7 @@ class DecisionTree extends SupervisedLearner
 class RandomForest extends SupervisedLearner
 {
 	int n;
-	
+	DecisionTree tree[];
 	RandomForest(int n){
 		this.n = n;
 	}
@@ -214,7 +214,7 @@ class RandomForest extends SupervisedLearner
 	@Override
 	void train(Matrix features, Matrix labels) {
 		//Create and train n decision trees
-		DecisionTree tree[] = new DecisionTree[n];
+		tree = new DecisionTree[n];
 		
 		for(int x = 0; x < n; x++){
 			tree[x].train(features, labels);
