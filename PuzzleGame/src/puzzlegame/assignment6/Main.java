@@ -1,6 +1,8 @@
 package puzzlegame.assignment6;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 
 class Main
@@ -37,9 +39,10 @@ class Main
 
 	public static void main(String[] args)
 	{
-		//testLearner(new BaselineLearner());
-		testLearner(new DecisionTree());
-		//testLearner(new RandomForest(50));
+		Random rand = new Random();
+		testLearner(new BaselineLearner());
+		testLearner(new DecisionTree(rand));
+		testLearner(new RandomForest(5, rand));
 	}
 }
 
@@ -68,7 +71,12 @@ class LeafNode extends Node
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
-	Random rand = new Random();
+	
+	Random rand;
+	
+	public DecisionTree(Random r){
+		this.rand = r;
+	}
 	
 	@Override
 	String name() {
@@ -79,9 +87,10 @@ class DecisionTree extends SupervisedLearner
 	Node buildTree(Matrix features, Matrix labels){
 		
 		//If we have no more rows left
-		if(features.rows() <= 1 || features.cols() <= 1){
+		if(features.rows() <= 1 ){
 			LeafNode leaf = new LeafNode();
 			leaf.label = computeLabel(labels);
+			//System.out.println(" Leaf Label:" + Arrays.toString(leaf.label));
 			return leaf;
 			
 		}
@@ -109,7 +118,7 @@ class DecisionTree extends SupervisedLearner
 		
 		for(int i = 0; i < features.rows(); i++){
 			
-			System.out.println("val: " + features.valueCount((int)features.row(i)[splitCol]));
+		//	System.out.println("val: " + features.valueCount((int)features.row(i)[splitCol]));
 			//NOTE THIS SPLITTING IS ONLY FOR CONTINUOUS DATA. We need to change to categorical data.
 			//System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
 			if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
@@ -158,9 +167,18 @@ class DecisionTree extends SupervisedLearner
 	void predict(double[] in, double[] out) {
 		
 	//	System.out.println("Predicting. In: " + Arrays.toString(in) + " out: " + Arrays.toString(out));
-		InteriorNode n = (InteriorNode) root;
+		//InteriorNode n = (InteriorNode) root;
+		Node n = root;
+		while (!n.isLeaf()) {
+			if (in[((InteriorNode) n).attribute] < ((InteriorNode) n).pivot)
+			n = ((InteriorNode) n).a;
+		else
+			n = ((InteriorNode) n).b; 
+		}
+		LeafNode leafNode = (LeafNode) n;
+		Vec.copy(out,leafNode.label);  
 		
-		while(!n.isLeaf()){
+	/*	while(!n.isLeaf()){
 						
 				if(in[n.attribute] < n.pivot){
 					//Check if its leaf node before we move...
@@ -182,28 +200,30 @@ class DecisionTree extends SupervisedLearner
 					else
 						n = (InteriorNode) n.b;
 				}
+				
+		
 				//System.out.println("Parent: " + n.attribute);
 				//n = (InteriorNode) n.b;
 				//System.out.println(" a: " + n.attribute);
 				
-		}
 		
-
-		
-		//System.out.println("Found leaf.");
-		
-	//	Vec.copy(out, mode);
-		
+		*/
 	}
 
-}
+} //End decisionTree
 
 class RandomForest extends SupervisedLearner
 {
 	int n;
+	DecisionTree tree[];
 	
-	RandomForest(int n){
+	RandomForest(int n, Random rand){
 		this.n = n;
+		tree = new DecisionTree[n];
+		
+		for(int x = 0; x < n; x++)
+			tree[x] = new DecisionTree(rand);
+		
 	}
 	
 	@Override
@@ -214,7 +234,6 @@ class RandomForest extends SupervisedLearner
 	@Override
 	void train(Matrix features, Matrix labels) {
 		//Create and train n decision trees
-		DecisionTree tree[] = new DecisionTree[n];
 		
 		for(int x = 0; x < n; x++){
 			tree[x].train(features, labels);
@@ -224,11 +243,50 @@ class RandomForest extends SupervisedLearner
 
 	@Override
 	void predict(double[] in, double[] out) {
-		//HOW DO I PREDICT? THIS GETS CALLED FROM learner.countmissclassifications(...) like a hundred times.
+		
+		ArrayList<double[]> labels = new ArrayList<double[]>();
+		//We predict one value
+		double[] temp = new double[1];
+		
+		for(int x = 0; x < n; x++){
+		
+			tree[x].predict(in,temp);
+			labels.add(temp);
+		}
+		
+		for(int x = 0; x < labels.size(); x++){
+			//System.out.println("Predicted label for tree["+x+"]: " + Arrays.toString(labels.get(x)));
+		}
+		double[] num = computeBestLabel(labels);
+		
+		Vec.copy(out,num);
 		
 	}
-	
-	
-	
+
+	private double[] computeBestLabel(ArrayList<double[]> labels) {
+		
+		int count = 1, tempCount;
+		double[] popular = labels.get(0);
+		double[] temp;
+		  for (int i = 0; i < labels.size(); i++)
+		  {
+		    temp = labels.get(i);
+		    tempCount = 0;
+		    for (int j = 1; j < labels.size(); j++)
+		    {
+		      if (temp == labels.get(j))
+		        tempCount++;
+		    }
+		    if (tempCount > count)
+		    {
+		      popular = temp;
+		      count = tempCount;
+		    }
+		  }
+		  
+		  //System.out.println("Most popular: " + Arrays.toString(popular));
+		  return popular;
+		
+	}
 	
 }
