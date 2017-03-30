@@ -165,17 +165,19 @@ class DecisionTree extends SupervisedLearner
 		
 			}
 			
-			if(splitA == 0 && splitB > ((splitA+1)*2))
-				splitAgain = true;
-			
-			if(splitB == 0 && splitA > ((splitB+1)*2))
-				splitAgain = true;
-			
-			if(splitA * 2 < splitB)
-				splitAgain = true;
-			
-			if(splitB * 2 < splitA)
-				splitAgain = true;
+			//if(!categorical){
+				if(splitA == 0 && splitB > ((splitA+1)*2))
+					splitAgain = true;
+				
+				if(splitB == 0 && splitA > ((splitB+1)*2))
+					splitAgain = true;
+				
+				if(splitA * 2 < splitB)
+					splitAgain = true;
+				
+				if(splitB * 2 < splitA)
+					splitAgain = true;
+		//	}
 			
 		} //End while
 		
@@ -214,8 +216,9 @@ class DecisionTree extends SupervisedLearner
 	@Override
 	void predict(double[] in, double[] out) {
 		
-	//	System.out.println("Predicting. In: " + Arrays.toString(in) + " out: " + Arrays.toString(out));
+		//System.out.println("Predicting. In: " + Arrays.toString(in) + " out: " + Arrays.toString(out));
 		//InteriorNode n = (InteriorNode) root;
+		
 		Node n = root;
 		while (!n.isLeaf()) {
 			if (in[((InteriorNode) n).attribute] < ((InteriorNode) n).pivot)
