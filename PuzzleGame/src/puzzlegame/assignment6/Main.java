@@ -34,7 +34,7 @@ class Main
 	{
 		test(learner, "hep");
 		test(learner, "vow");
-		//test(learner, "soy");
+		test(learner, "soy");
 	}
 
 	public static void main(String[] args)
@@ -95,43 +95,91 @@ class DecisionTree extends SupervisedLearner
 			
 		}
 		
-	
+		
+		Matrix af = new Matrix();
+		Matrix bf = new Matrix();
+
+		Matrix al = new Matrix();
+		Matrix bl = new Matrix();
 		//System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
 		
 		InteriorNode n = new InteriorNode();
+		int splitCol = 0;
+		double splitVal = 0.0;
+		int splitA = 0;
+		int splitB = 0;
+		boolean splitAgain = true;
 		
-		int splitCol = rand.nextInt(features.cols());
-		int randRow = rand.nextInt(features.rows());
-		double splitVal = features.row(randRow)[splitCol]; //splits on that column for that random row
-		
-		//System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
-		
-		Matrix af = new Matrix();
-		af.copyMetaData(features);
-		Matrix bf = new Matrix();
-		bf.copyMetaData(features);
-		
-		Matrix al = new Matrix();
-		al.copyMetaData(labels);
-		Matrix bl = new Matrix();
-		bl.copyMetaData(labels);
-		
-		for(int i = 0; i < features.rows(); i++){
+		while(splitAgain){
 			
-		//	System.out.println("val: " + features.valueCount((int)features.row(i)[splitCol]));
-			//NOTE THIS SPLITTING IS ONLY FOR CONTINUOUS DATA. We need to change to categorical data.
-			//System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
-			if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
-				Vec.copy(af.newRow(), features.row(i));
-				Vec.copy(al.newRow(), labels.row(i));
+			splitAgain = false;
+			splitA = 0;
+			splitB = 0;
+			splitCol = rand.nextInt(features.cols());
+			int randRow = rand.nextInt(features.rows());
+			splitVal = features.row(randRow)[splitCol]; //splits on that column for that random row
+		
+			af.copyMetaData(features);
+			bf.copyMetaData(features);
+			
+			al.copyMetaData(labels);
+			bl.copyMetaData(labels);
+			//System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
+			boolean categorical = false;
+			if(features.valueCount(splitCol) == 0)
+				categorical = true;
+		
+			for(int i = 0; i < features.rows(); i++){
+			
+				
+				//System.out.println("val: " + features.valueCount((int)features.row(i)[splitCol]));
+				//NOTE THIS SPLITTING IS ONLY FOR CONTINUOUS DATA. We need to change to categorical data.
+				//System.out.println("Features.row(" + i + ")[" + splitCol + "]: " + features.row(i)[splitCol] + " < " + splitVal);
+				
+				if(categorical){
+					if(features.row(i)[splitCol] == splitVal){ //if the current feature row is less than the split value, we need to split it
+						Vec.copy(af.newRow(), features.row(i));
+						Vec.copy(al.newRow(), labels.row(i));
+						splitA++;
+					}
+					else
+					{
+						Vec.copy(bf.newRow(), features.row(i));
+						Vec.copy(bl.newRow(), labels.row(i));
+						splitB++;
+					}
+				}
+				else{
+					if(features.row(i)[splitCol] < splitVal){ //if the current feature row is less than the split value, we need to split it
+						Vec.copy(af.newRow(), features.row(i));
+						Vec.copy(al.newRow(), labels.row(i));
+						splitA++;
+					}
+					else
+					{
+						Vec.copy(bf.newRow(), features.row(i));
+						Vec.copy(bl.newRow(), labels.row(i));
+						splitB++;
+					}
+				}
+		
 			}
-			else
-			{
-				Vec.copy(bf.newRow(), features.row(i));
-				Vec.copy(bl.newRow(), labels.row(i));
-			}
-	
-		}
+			
+			if(splitA == 0 && splitB > ((splitA+1)*2))
+				splitAgain = true;
+			
+			if(splitB == 0 && splitA > ((splitB+1)*2))
+				splitAgain = true;
+			
+			if(splitA * 2 < splitB)
+				splitAgain = true;
+			
+			if(splitB * 2 < splitA)
+				splitAgain = true;
+			
+		} //End while
+		
+		//System.out.println("SplitA: " + splitA + " splitB: " + splitB);
 		
 		//System.out.println("n.attribute: " + splitCol + " n.pivot: " + splitVal);
 		//Store the values in a new node
@@ -177,37 +225,6 @@ class DecisionTree extends SupervisedLearner
 		}
 		LeafNode leafNode = (LeafNode) n;
 		Vec.copy(out,leafNode.label);  
-		
-	/*	while(!n.isLeaf()){
-						
-				if(in[n.attribute] < n.pivot){
-					//Check if its leaf node before we move...
-					if(n.a.isLeaf()){
-						LeafNode leaf = (LeafNode) n.a;
-						Vec.copy(out,leaf.label);
-						break;
-					}
-					else
-						n = (InteriorNode) n.a;
-				}
-				else{
-					
-					if(n.b.isLeaf()){
-						LeafNode leaf = (LeafNode) n.b;
-						Vec.copy(out,leaf.label);
-						break;
-					}
-					else
-						n = (InteriorNode) n.b;
-				}
-				
-		
-				//System.out.println("Parent: " + n.attribute);
-				//n = (InteriorNode) n.b;
-				//System.out.println(" a: " + n.attribute);
-				
-		
-		*/
 	}
 
 } //End decisionTree
@@ -246,12 +263,11 @@ class RandomForest extends SupervisedLearner
 		
 		ArrayList<double[]> labels = new ArrayList<double[]>();
 		//We predict one value
-		double[] temp = new double[1];
+		//double[] temp = new double[1];
 		
 		for(int x = 0; x < n; x++){
-		
-			tree[x].predict(in,temp);
-			labels.add(temp);
+			tree[x].predict(in,out);
+			labels.add(out);
 		}
 		
 		for(int x = 0; x < labels.size(); x++){
@@ -284,9 +300,10 @@ class RandomForest extends SupervisedLearner
 		    }
 		  }
 		  
-		  //System.out.println("Most popular: " + Arrays.toString(popular));
+		//  System.out.println("Most popular: " + Arrays.toString(popular));
 		  return popular;
 		
 	}
+	
 	
 }
