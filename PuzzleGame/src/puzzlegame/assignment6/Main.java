@@ -34,7 +34,7 @@ class Main
 	{
 		test(learner, "hep");
 		test(learner, "vow");
-		test(learner, "soy");
+		//test(learner, "soy");
 	}
 
 	public static void main(String[] args)
@@ -57,7 +57,7 @@ class InteriorNode extends Node
 	double pivot; // which value to divide on
 	Node a;
 	Node b;
-
+	boolean categorical;
 	boolean isLeaf() { return false; }
 }
 
@@ -86,6 +86,7 @@ class DecisionTree extends SupervisedLearner
 	
 	Node buildTree(Matrix features, Matrix labels){
 		
+	//	System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
 		//If we have no more rows left
 		if(features.rows() <= 1 ){
 			LeafNode leaf = new LeafNode();
@@ -101,7 +102,7 @@ class DecisionTree extends SupervisedLearner
 
 		Matrix al = new Matrix();
 		Matrix bl = new Matrix();
-		//System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
+
 		
 		InteriorNode n = new InteriorNode();
 		int splitCol = 0;
@@ -109,8 +110,10 @@ class DecisionTree extends SupervisedLearner
 		int splitA = 0;
 		int splitB = 0;
 		boolean splitAgain = true;
+		boolean categorical = false;
+		int numSplits = 0;
 		
-		while(splitAgain){
+		while(splitAgain && numSplits < 50){
 			
 			splitAgain = false;
 			splitA = 0;
@@ -125,9 +128,9 @@ class DecisionTree extends SupervisedLearner
 			al.copyMetaData(labels);
 			bl.copyMetaData(labels);
 			//System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
-			boolean categorical = false;
+			
 			if(features.valueCount(splitCol) == 0)
-				categorical = true;
+				categorical = false;
 		
 			for(int i = 0; i < features.rows(); i++){
 			
@@ -166,25 +169,29 @@ class DecisionTree extends SupervisedLearner
 			}
 			
 			//if(!categorical){
-				if(splitA == 0 && splitB > ((splitA+1)*2))
+				if(splitA == 0 && splitB >= ((splitA+1)*2))
 					splitAgain = true;
 				
-				if(splitB == 0 && splitA > ((splitB+1)*2))
+				if(splitB == 0 && splitA >= ((splitB+1)*2))
 					splitAgain = true;
 				
-				if(splitA * 2 < splitB)
+				if((splitA + 1) * 2 < splitB + 1)
 					splitAgain = true;
 				
-				if(splitB * 2 < splitA)
+				if((splitB + 1) * 2 < splitA + 1)
 					splitAgain = true;
-		//	}
-			
+				
+				numSplits++;
+			//}
+			//System.out.println("Categorical: " + categorical + " SplitA: " + splitA + " splitB: " + splitB);
 		} //End while
 		
-		//System.out.println("SplitA: " + splitA + " splitB: " + splitB);
+	//	System.out.println("SplitA: " + splitA + " splitB: " + splitB);
 		
 		//System.out.println("n.attribute: " + splitCol + " n.pivot: " + splitVal);
+		
 		//Store the values in a new node
+		n.categorical = categorical;
 		n.attribute = splitCol;
 	    n.pivot = splitVal;
 	    n.a = buildTree(af,al);
@@ -221,10 +228,19 @@ class DecisionTree extends SupervisedLearner
 		
 		Node n = root;
 		while (!n.isLeaf()) {
-			if (in[((InteriorNode) n).attribute] < ((InteriorNode) n).pivot)
-			n = ((InteriorNode) n).a;
-		else
-			n = ((InteriorNode) n).b; 
+			
+			if(((InteriorNode)n).categorical){
+				if (in[((InteriorNode) n).attribute] == ((InteriorNode) n).pivot)
+					n = ((InteriorNode) n).a;
+					else
+					n = ((InteriorNode) n).b;
+			}
+			else{
+				if (in[((InteriorNode) n).attribute] < ((InteriorNode) n).pivot)
+				n = ((InteriorNode) n).a;
+				else
+				n = ((InteriorNode) n).b;
+			}
 		}
 		LeafNode leafNode = (LeafNode) n;
 		Vec.copy(out,leafNode.label);  
