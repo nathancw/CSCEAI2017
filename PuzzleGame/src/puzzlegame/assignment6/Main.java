@@ -3,6 +3,8 @@ package puzzlegame.assignment6;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 class Main
@@ -34,7 +36,7 @@ class Main
 	{
 		test(learner, "hep");
 		test(learner, "vow");
-		//test(learner, "soy");
+		test(learner, "soy");
 	}
 
 	public static void main(String[] args)
@@ -42,7 +44,7 @@ class Main
 		Random rand = new Random();
 		testLearner(new BaselineLearner());
 		testLearner(new DecisionTree(rand));
-		testLearner(new RandomForest(5, rand));
+		testLearner(new RandomForest(30, rand));
 	}
 }
 
@@ -88,7 +90,7 @@ class DecisionTree extends SupervisedLearner
 		
 	//	System.out.println("\nRow size: " + features.rows()  + " features cols: " + features.cols());
 		//If we have no more rows left
-		if(features.rows() <= 1 ){
+		if(features.rows() <= 0 ){
 			LeafNode leaf = new LeafNode();
 			leaf.label = computeLabel(labels);
 			//System.out.println(" Leaf Label:" + Arrays.toString(leaf.label));
@@ -113,7 +115,7 @@ class DecisionTree extends SupervisedLearner
 		boolean categorical = false;
 		int numSplits = 0;
 		
-		while(splitAgain && numSplits < 50){
+		while(splitAgain && numSplits < 10){
 			
 			splitAgain = false;
 			splitA = 0;
@@ -129,7 +131,7 @@ class DecisionTree extends SupervisedLearner
 			bl.copyMetaData(labels);
 			//System.out.println("SplitCol: " + splitCol + " Splittng on : " + splitVal);
 			
-			if(features.valueCount(splitCol) == 0)
+			if(features.valueCount(splitCol) ==	 0)
 				categorical = false;
 		
 			for(int i = 0; i < features.rows(); i++){
@@ -168,8 +170,7 @@ class DecisionTree extends SupervisedLearner
 		
 			}
 			
-			//if(!categorical){
-				if(splitA == 0 && splitB >= ((splitA+1)*2))
+				/*if(splitA == 0 && splitB >= ((splitA+1)*2))
 					splitAgain = true;
 				
 				if(splitB == 0 && splitA >= ((splitB+1)*2))
@@ -180,14 +181,30 @@ class DecisionTree extends SupervisedLearner
 				
 				if((splitB + 1) * 2 < splitA + 1)
 					splitAgain = true;
+				*/
+			
+				if(splitA < 1 && splitB > 1)
+					splitAgain = true;
 				
+				if(splitB < 1 && splitA > 1)
+					splitAgain = true;
 				numSplits++;
-			//}
+			
 			//System.out.println("Categorical: " + categorical + " SplitA: " + splitA + " splitB: " + splitB);
 		} //End while
 		
-	//	System.out.println("SplitA: " + splitA + " splitB: " + splitB);
+		if(splitA <= 1){
+			LeafNode leaf = new LeafNode();
+			leaf.label = computeLabel(labels);
+			return leaf;
+		}
 		
+		if(splitB <=1){
+			LeafNode leaf = new LeafNode();
+			leaf.label = computeLabel(labels);
+			return leaf;
+		}
+	//	System.out.println("SplitA: " + splitA + " splitB: " + splitB);
 		//System.out.println("n.attribute: " + splitCol + " n.pivot: " + splitVal);
 		
 		//Store the values in a new node
@@ -252,9 +269,11 @@ class RandomForest extends SupervisedLearner
 {
 	int n;
 	DecisionTree tree[];
+	Random rand;
 	
 	RandomForest(int n, Random rand){
 		this.n = n;
+		this.rand = rand;
 		tree = new DecisionTree[n];
 		
 		for(int x = 0; x < n; x++)
@@ -271,7 +290,17 @@ class RandomForest extends SupervisedLearner
 	void train(Matrix features, Matrix labels) {
 		//Create and train n decision trees
 		
+		
 		for(int x = 0; x < n; x++){
+			
+			//Bootstrap the rows
+			for(int c = 0; c < 15; c++){
+				int firstRow = rand.nextInt(features.rows());
+				int secondRow = rand.nextInt(features.rows());
+				features.swapRows(firstRow, secondRow);
+				labels.swapRows(firstRow, secondRow);
+			}
+			
 			tree[x].train(features, labels);
 		}
 		
@@ -286,12 +315,11 @@ class RandomForest extends SupervisedLearner
 		
 		for(int x = 0; x < n; x++){
 			tree[x].predict(in,out);
-			labels.add(out);
+			//System.out.println("predicted: " + Arrays.toString(out));
+			labels.add(out.clone());
 		}
-		
-		for(int x = 0; x < labels.size(); x++){
-			//System.out.println("Predicted label for tree["+x+"]: " + Arrays.toString(labels.get(x)));
-		}
+		// System.out.println("--------------");
+	
 		double[] num = computeBestLabel(labels);
 		
 		Vec.copy(out,num);
@@ -299,7 +327,7 @@ class RandomForest extends SupervisedLearner
 	}
 
 	private double[] computeBestLabel(ArrayList<double[]> labels) {
-		
+	/*	
 		int count = 1, tempCount;
 		double[] popular = labels.get(0);
 		double[] temp;
@@ -318,9 +346,37 @@ class RandomForest extends SupervisedLearner
 		      count = tempCount;
 		    }
 		  }
-		  
-		//  System.out.println("Most popular: " + Arrays.toString(popular));
-		  return popular;
+		 */
+
+		//for(int x = 0; x < labels.size(); x++)
+		//	System.out.println("labels: " + Arrays.toString(labels.get(x)));
+		
+		Map<Double, Integer> valCount = new HashMap<>();
+		
+		for(double[] s: labels)
+		{
+		  Integer c = valCount.get(s[0]);
+		  if(c == null) c = new Integer(0);
+		  c++;
+		  valCount.put(s[0],c);
+		}
+		
+		//for (Map.Entry<Double, Integer> entry : valCount.entrySet()) {
+		//    System.out.println(entry.getKey()+" : "+entry.getValue());
+		//}
+		
+		Map.Entry<Double,Integer> mostRepeated = null;
+		for(Map.Entry<Double, Integer> e: valCount.entrySet())
+		{
+		    if(mostRepeated == null || mostRepeated.getValue()<e.getValue())
+		        mostRepeated = e;
+		}
+	//	if(mostRepeated != null)
+	      //  System.out.println("Most common string: " + mostRepeated.getKey() + "\n -----------------");
+		 // System.out.println("Most popular: " + Arrays.toString(popular) + "\n -----------------");
+		 double[] arry = {mostRepeated.getKey()};
+	     return arry;
+		
 		
 	}
 	
