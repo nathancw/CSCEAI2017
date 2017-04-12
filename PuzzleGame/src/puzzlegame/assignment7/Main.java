@@ -10,7 +10,7 @@ public class Main {
 	{
 		System.out.println("Assignment 7 Running.");
 		Random rand = new Random();
-		Matrix arr = new Matrix(20,10);
+		Matrix arr = new Matrix(10,20);
 		arr.addWall();
 		arr.print();
 		int action;
@@ -85,7 +85,7 @@ class Matrix{
 	int normalMove = 1;
 	int wrongMove = -1;
 	int hitWall = -1;
-	int goal = 100;
+	int goal = 10;
 	
 	public Matrix(int row, int col){
 		cols = col;
@@ -373,11 +373,11 @@ class Matrix{
 	public void addWall(){
 		for(int c = 0; c < cols; c++){
 			for(int r = 0; r < rows; r++){
-				if(c == 5){
+				if(c == 10){
 					arr[r][c] = '#';
 					qTable[r][c] = (double)hitWall;
 				}
-				if(c==5 && ((r == 3) || (r==4)))
+				if(c==10 && ((r == 3) || (r==4)))
 					arr[r][c] = '.';
 			}
 		}
