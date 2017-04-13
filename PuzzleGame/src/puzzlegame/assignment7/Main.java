@@ -14,7 +14,7 @@ public class Main {
 		arr.addWall();
 		arr.print();
 		int action;
-		int count = 10000;
+		int count = 100000;
 		int loopNumber = 0;
 		
 		while(loopNumber < count){
@@ -56,13 +56,13 @@ public class Main {
 				
 			}
 			//arr.printQTable();
-			System.out.println("Found goal. Moves: " + numberMoves + " Loop number: " + loopNumber);
+			//System.out.println("Found goal. Moves: " + numberMoves + " Loop number: " + loopNumber);
 			arr.reset();
 			loopNumber++;
 		}
 		
 		arr.printQTable();
-		arr.transverseQTable();
+		arr.printWaveBoard();
 	}
 	
 	
@@ -84,8 +84,8 @@ class Matrix{
 	
 	int normalMove = -1;
 	int wrongMove = -1000;
-	int hitWall = -10;
-	int goal = 100;
+	int hitWall = -400;
+	int goal = 10;
 	
 	public Matrix(int row, int col){
 		cols = col;
@@ -124,7 +124,7 @@ class Matrix{
 
 	public void transverseQTable(){
 		reset();
-		print();
+		//print();
 		while(!hitGoal()){
 			int a = 0;
 			for(int candidate = 0; candidate < 4; candidate++){
