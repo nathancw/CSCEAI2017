@@ -8,15 +8,16 @@ public class Main {
 
 	public static void main(String[] args)
 	{
-		System.out.println("Assignment 7 Running.");
+
 		Random rand = new Random();
 		Matrix arr = new Matrix(10,20);
 		arr.addWall();
-		arr.print();
+		//arr.print();
 		int action;
-		int count = 100000;
+		int count = 30000;
 		int loopNumber = 0;
 		
+		System.out.println("Assignment 7 - Nathaniel Webb - Q Learning at " + count + " iterations.");
 		while(loopNumber < count){
 			int numberMoves = 0;
 			while(!arr.hitGoal()){
@@ -61,7 +62,7 @@ public class Main {
 			loopNumber++;
 		}
 		
-		arr.printQTable();
+		//arr.printQTable();
 		arr.printWaveBoard();
 	}
 	
@@ -109,7 +110,7 @@ class Matrix{
 		currC = startC;
 		
 		arr[startR][startC] = 'S';
-		arr[endR][endC] = 'E';
+		arr[endR][endC] = 'G';
 	}
 	
 	public void printQTable() {
@@ -129,11 +130,14 @@ class Matrix{
 			int a = 0;
 			for(int candidate = 0; candidate < 4; candidate++){
 			//	System.out.println("Q val: " + checkQTable(candidate));
+				
+			
 				if(checkQTable(candidate) > checkQTable(a)){
 					a = candidate;
 					
 				}
 			}
+	
 			
 			if(a == 0){ //Left
 				arr[currR][currC] = '<';
@@ -151,6 +155,7 @@ class Matrix{
 				arr[currR][currC] = 'v';
 				currR = currR + 1;
 			}
+			
 			//System.out.println("CurrR: " + currR + "currC: " + currC);
 		}
 		print();
@@ -173,6 +178,11 @@ class Matrix{
 							
 						}
 					}
+					
+					
+					if(currR == 0 && currC == cols - 1)
+						System.out.println("Best action: " + a);
+					
 					
 					if(a == 0){ //Left
 						System.out.print("<");
@@ -203,49 +213,31 @@ class Matrix{
 	
 		if(action == 0){ //Move left
 			if(c == 0)
-				return (double)wrongMove;
-			else if(arr[r][c-1] == '#')
-				return (double)hitWall;
-			else if(arr[r][c-1] == 'E')
-				return (double)goal;
+				return 0.0;
 			else
 				return qTable[r][c-1];
 			
 		}
 		else if(action == 1){ //Move up
 			if(r == 0)
-				return (double)wrongMove;
-			else if(arr[r-1][c] == '#')
-				return (double)hitWall;
-			else if(arr[r-1][c] == 'E')
-				return (double)goal;
+				return 0.0;
 			else
 				return qTable[r-1][c];
 			
 		}
 		else if(action == 2){ //Move right
-			if(c == cols-1)
-				return (double)wrongMove;
-			else if(arr[r][c+1] == '#')
-				return (double)hitWall;
-			else if(arr[r][c+1] == 'E')
-				return (double)goal;
+			if(c == cols - 1)
+				return 0.0;
 			else
 				return qTable[r][c+1];
 			
 		}
 		else if(action == 3){ //Move down
-			
 			if(r == rows-1)
-				return (double)wrongMove;
-			else if(arr[r+1][c] == '#')
-				return (double)hitWall;
-			else if(arr[r+1][c] == 'E')
-				return (double)goal;
+				return 0.0;
 			else
 				return qTable[r+1][c];
 		}
-		
 		return 0.0;
 	}
 
@@ -302,7 +294,7 @@ class Matrix{
 				return wrongMove;
 			else if(arr[currR][currC-1] == '#')
 				return hitWall;
-			else if(arr[currR][currC-1] == 'E')
+			else if(arr[currR][currC-1] == 'G')
 				return goal;
 			else
 				return normalMove;
@@ -313,7 +305,7 @@ class Matrix{
 				return wrongMove;
 			else if(arr[currR-1][currC] == '#')
 				return hitWall;
-			else if(arr[currR-1][currC] == 'E')
+			else if(arr[currR-1][currC] == 'G')
 				return goal;
 			else
 				return normalMove;
@@ -324,7 +316,7 @@ class Matrix{
 				return wrongMove;
 			else if(arr[currR][currC+1] == '#')
 				return hitWall;
-			else if(arr[currR][currC+1] == 'E')
+			else if(arr[currR][currC+1] == 'G')
 				return goal;
 			else
 				return normalMove;
@@ -336,7 +328,7 @@ class Matrix{
 				return wrongMove;
 			else if(arr[currR+1][currC] == '#')
 				return hitWall;
-			else if(arr[currR+1][currC] == 'E')
+			else if(arr[currR+1][currC] == 'G')
 				return goal;
 			else
 				return normalMove;
