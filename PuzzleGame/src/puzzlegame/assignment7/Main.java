@@ -14,7 +14,7 @@ public class Main {
 		arr.addWall();
 		arr.print();
 		int action;
-		int count = 1;
+		int count = 10000;
 		int loopNumber = 0;
 		
 		while(loopNumber < count){
@@ -32,8 +32,7 @@ public class Main {
 					// Exploit (pick the best action)
 					action = 0;
 					for(int candidate = 0; candidate < 4; candidate++){
-						//if(Q(i, candidate) > Q(i, action))
-						
+				//	if(arr.checkAction(candidate) != arr.hitWall || arr.checkAction(action) != arr.hitWall)
 						if(arr.checkQTable(candidate) > arr.checkQTable(action)){
 							//System.out.println("Candiate: " + candidate + " val: " + arr.checkAction(candidate));
 							action = candidate;
@@ -48,21 +47,22 @@ public class Main {
 				case 2: dir = "right"; break;
 				case 3: dir = "down"; break;
 				}
-			//	System.out.println("Best action: " + dir);
+				//System.out.println("Best action: " + dir);
 				// Do the action
 				arr.do_action(action);
 				numberMoves++;
 				
 				
+				
 			}
-			arr.printQTable();
+			//arr.printQTable();
 			System.out.println("Found goal. Moves: " + numberMoves + " Loop number: " + loopNumber);
 			arr.reset();
 			loopNumber++;
 		}
 		
-	
-		arr.printWaveBoard();
+		arr.printQTable();
+		arr.transverseQTable();
 	}
 	
 	
@@ -82,10 +82,10 @@ class Matrix{
 	int endR;
 	int endC;
 	
-	int normalMove = 1;
-	int wrongMove = -1;
-	int hitWall = -1;
-	int goal = 10;
+	int normalMove = -1;
+	int wrongMove = -1000;
+	int hitWall = -10;
+	int goal = 100;
 	
 	public Matrix(int row, int col){
 		cols = col;
@@ -101,7 +101,7 @@ class Matrix{
 		
 		startR = rows-1;
 		startC = 0;
-		
+	//	qTable[startR][startC] = -1.0;
 		endC = cols-1;
 		endR = 0;
 		
@@ -122,6 +122,42 @@ class Matrix{
 		
 	}
 
+	public void transverseQTable(){
+		reset();
+		print();
+		while(!hitGoal()){
+			int a = 0;
+			for(int candidate = 0; candidate < 4; candidate++){
+			//	System.out.println("Q val: " + checkQTable(candidate));
+				if(checkQTable(candidate) > checkQTable(a)){
+					a = candidate;
+					
+				}
+			}
+			
+			if(a == 0){ //Left
+				arr[currR][currC] = '<';
+				currC = currC - 1;
+			}
+			else if(a == 1){ //Up
+				arr[currR][currC] = '^';
+				currR = currR-1;
+			}
+			else if(a == 2){ //Right
+				arr[currR][currC] = '>';
+				currC = currC + 1;
+			}
+			else if(a== 3){ //Down
+				arr[currR][currC] = 'v';
+				currR = currR + 1;
+			}
+			//System.out.println("CurrR: " + currR + "currC: " + currC);
+		}
+		print();
+		
+		
+	}
+	
 	public void printWaveBoard() {
 		//reset();
 		for(int r = 0; r < rows; r++){
@@ -227,45 +263,28 @@ class Matrix{
 
 		if(action == 0){ //Move left
 			if(currC == 0)
-				return (double)wrongMove;
-			else if(arr[currR][currC-1] == '#')
-				return (double)hitWall;
-			else if(arr[currR][currC-1] == 'E')
-				return (double)goal;
+				return 0.0;
 			else
 				return qTable[currR][currC-1];
 			
 		}
 		else if(action == 1){ //Move up
 			if(currR == 0)
-				return (double)wrongMove;
-			else if(arr[currR-1][currC] == '#')
-				return (double)hitWall;
-			else if(arr[currR-1][currC] == 'E')
-				return (double)goal;
+				return 0.0;
 			else
 				return qTable[currR-1][currC];
 			
 		}
 		else if(action == 2){ //Move right
-			if(currC == cols-1)
-				return (double)wrongMove;
-			else if(arr[currR][currC+1] == '#')
-				return (double)hitWall;
-			else if(arr[currR][currC+1] == 'E')
-				return (double)goal;
+			if(currC == cols - 1)
+				return 0.0;
 			else
 				return qTable[currR][currC+1];
 			
 		}
 		else if(action == 3){ //Move down
-			
 			if(currR == rows-1)
-				return (double)wrongMove;
-			else if(arr[currR+1][currC] == '#')
-				return (double)hitWall;
-			else if(arr[currR+1][currC] == 'E')
-				return (double)goal;
+				return 0.0;
 			else
 				return qTable[currR+1][currC];
 		}
@@ -328,9 +347,12 @@ class Matrix{
 
 	public void do_action(int action) {
 		///0 = left,  1 = up, 2 = right, 3 = down
-		double currVal = qTable[currR][currC];
-		if(checkAction(action) != wrongMove && checkAction(action) != hitWall){
-			
+
+		//System.out.println("CheckngAction: " + action + " CurR: " + currR + " currC : " + currC + " val: " +  checkAction(action));
+		if(checkAction(action) != wrongMove){
+			double currVal = checkQTable(action);
+			int reward = checkAction(action);
+			//System.out.println("Doing action: " + action);
 			if(action == 0){ //Left
 				currC = currC - 1;
 			}
@@ -344,20 +366,23 @@ class Matrix{
 			else if(action == 3){ //Down
 				currR = currR + 1;
 			}
-		}
-		//else do nothing?
-		
-		//Compute best action
-		int a = 0;
-		for(int candidate = 0; candidate < 4; candidate++){
-			if(checkQTable(candidate) > checkQTable(a)){
-				a = candidate;
+			//else do nothing?
+			
+			//Compute best action
+			int a = 0;
+			for(int candidate = 0; candidate < 4; candidate++){
+				if(checkQTable(candidate) > checkQTable(a)){
+					a = candidate;
+				}
 			}
+			//System.out.println("(1-.1)*"+currVal+" + 0.1*("+checkAction(action)+") + 0.97 *"+checkQTable(a));
+			qTable[currR][currC] = (1-.1)*currVal + 0.1* ((reward + 0.97 * checkQTable(a)) );
+			//qTable[currR][currC] = currVal + 0.1* ((reward + 0.97 * checkQTable(a)) - currVal );
+		//	System.out.println("Qtable["+currR+"]["+currC+"]:" + qTable[currR][currC]);
+			//Q(i,a) = (1-0.1)*Q(i,a) + 0.1(r(i,a,j) + 0.97 * max Q(j,b))
+		
 		}
-		//System.out.println("(1-.1)*"+currVal+" + 0.1*("+checkAction(action)+") + 0.97 *"+checkQTable(a));
-		qTable[currR][currC] = (1-.1)*currVal + 0.1* ((checkAction(action) + 0.97 * checkQTable(a)) );
-		//System.out.println("Qtable["+currR+"]["+currC+"]:" + qTable[currR][currC]);
-		//Q(i,a) = (1-0.1)*Q(i,a) + 0.1(r(i,a,j) + 0.97 * max Q(j,b))
+		
 		
 	}
 
@@ -375,7 +400,7 @@ class Matrix{
 			for(int r = 0; r < rows; r++){
 				if(c == 10){
 					arr[r][c] = '#';
-					qTable[r][c] = (double)hitWall;
+					//qTable[r][c] = (double)hitWall;
 				}
 				if(c==10 && ((r == 3) || (r==4)))
 					arr[r][c] = '.';
