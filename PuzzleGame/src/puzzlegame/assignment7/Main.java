@@ -14,7 +14,7 @@ public class Main {
 		arr.addWall();
 		//arr.print();
 		int action;
-		int count = 30000;
+		int count = 10000;
 		int loopNumber = 0;
 		
 		System.out.println("Assignment 7 - Nathaniel Webb - Q Learning at " + count + " iterations.");
@@ -342,6 +342,8 @@ class Matrix{
 
 		//System.out.println("CheckngAction: " + action + " CurR: " + currR + " currC : " + currC + " val: " +  checkAction(action));
 		if(checkAction(action) != wrongMove){
+			int tempC = currC;
+			int tempR = currR;
 			double currVal = checkQTable(action);
 			int reward = checkAction(action);
 			//System.out.println("Doing action: " + action);
@@ -368,7 +370,7 @@ class Matrix{
 				}
 			}
 			//System.out.println("(1-.1)*"+currVal+" + 0.1*("+checkAction(action)+") + 0.97 *"+checkQTable(a));
-			qTable[currR][currC] = (1-.1)*currVal + 0.1* ((reward + 0.97 * checkQTable(a)) );
+			qTable[tempR][tempC] = (1-.1)*currVal + 0.1* ((reward + 0.97 * checkQTable(a)) );
 			//qTable[currR][currC] = currVal + 0.1* ((reward + 0.97 * checkQTable(a)) - currVal );
 		//	System.out.println("Qtable["+currR+"]["+currC+"]:" + qTable[currR][currC]);
 			//Q(i,a) = (1-0.1)*Q(i,a) + 0.1(r(i,a,j) + 0.97 * max Q(j,b))
