@@ -1,8 +1,14 @@
 package puzzlegame.assignment3;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -10,8 +16,13 @@ import java.util.Random;
 class GameTest
 {
 
-	static double[] evolveWeights()
+	static double[] evolveWeights() throws IOException
 	{
+
+		FileWriter fw = new FileWriter("outputfilename", true);
+	    BufferedWriter bw = new BufferedWriter(fw);
+	    PrintWriter out = new PrintWriter(bw);
+			
 		// Create a random initial population
 		Random r = new Random();
 		Matrix population = new Matrix(100, 291);
@@ -30,14 +41,14 @@ class GameTest
 		
 		
 		int numEvolutions = 0;
-		int maxEvolutions = 800;
+		int maxEvolutions = 1000;
 		
 		
 		while(numEvolutions < maxEvolutions){
 		//Add mutation
 		//int mutationCount = 0;
-		int mutationRate = 400; //1/mutation rate to be mutated
-		double mutationAverage = 0.5;
+		int mutationRate = 200; //1/mutation rate to be mutated
+		double mutationAverage = 0.7;
 		for(int i = 0; i < 100; i++)
 		{
 			double[] chromosome = population.row(i);
@@ -81,29 +92,22 @@ class GameTest
 				
 				int winner = 0;
 				try {
-					winner = Controller.doBattleNoGui(new NeuralAgent(chromoOne), new NeuralAgent(chromoTwo));
+					winner = Controller.doBattleNoGui(new ReflexAgent(), new NeuralAgent(chromoTwo));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 
 				if(winner == 1){
-					//System.out.print("ChromoOne won.\n");
-					int killLoser = r.nextInt(100);
-					
-					if(killLoser <= probToSurvive){ //67% to killLoser and live
-						for(int i = 0; i < chromoTwo.length; i++)
-							population.row(cNum2)[i] = 0; //Kill the chromoOne
-						//System.out.println(" Killed  -- " + cNum2);
-					}
-					else{ //Oops he gets to be killed
-						for(int i = 0; i < chromoOne.length; i++)
-							population.row(cNum1)[i] = 0; //Kill the chromoOne
-						//System.out.println(" Killed -- " + cNum1);
-					}
+					for(int i = 0; i < chromoTwo.length; i++)
+						population.row(cNum2)[i] = 0; //Kill the chromoOne
 				}
 				else if(winner == -1){
-					//System.out.print("ChromoTwo won.\n");
+					System.out.print("ChromoTwo won.\n");
+					out.println(Arrays.toString(chromoTwo));
 					
+					
+			
+				/*	
 					int killLoser = r.nextInt(100);
 					
 					if(killLoser <=probToSurvive){ //67% to killLoser and live
@@ -116,10 +120,9 @@ class GameTest
 							population.row(cNum2)[i] = 0; //Kill the chromoOne
 						//System.out.println(" Killed -- " + cNum2);
 					}
+					*/ 
 					
-				}
-				else{
-					//System.out.println("Nobody won. Killing both.");
+					
 				}
 				
 				
