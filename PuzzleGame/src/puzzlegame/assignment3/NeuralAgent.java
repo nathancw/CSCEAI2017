@@ -132,6 +132,7 @@ class NeuralAgent implements IAgent
 		// Head for the opponent's flag
 		findBestDestination(m,i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS, Model.YFLAG_OPPONENT);
 		
+		//beAggressor(m,i);
 		
 		//m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
 		
@@ -151,6 +152,8 @@ class NeuralAgent implements IAgent
 
 		// Find the opponent nearest to me
 		nearestOpponent(m, myX, myY);
+		
+		
 		if(index >= 0) {
 			float enemyX = m.getXOpponent(index);
 			float enemyY = m.getYOpponent(index);
@@ -167,22 +170,35 @@ class NeuralAgent implements IAgent
 				//m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
 
 				// Throw bombs
-				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
+				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 					m.throwBomb(i, enemyX, enemyY);
+					m.throwBomb(i, enemyX, enemyY);
+				}
 			}
 			else {
 
 				// If the opponent is close enough to shoot at me...
 				if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
-					//findBestDestination(m,i,Model.XFLAG, Model.YFLAG);
-					m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
+					findBestDestination(m,i,Model.XFLAG, Model.YFLAG);
+					//m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
 				}
 				else {
 					m.setDestination(i, myX, myY); // Rest
 				}
 			}
 		}
+		
 
+		int dead  = 0;
+		for(int x = 0; x < 3; x++){
+			//System.out.println("m.Energy of x" + x + ": " + m.getEnergyOpponent(x));
+			if(m.getEnergyOpponent(x) < 0)
+				dead++;
+		}
+		if(dead == 1){
+			//System.out.println("2 dead!");
+			beFlagAttacker(m,i);
+		}
 		// Try not to die
 		avoidBombs(m, i);
 	}
@@ -207,7 +223,7 @@ class NeuralAgent implements IAgent
 	}
 
 	public void update(Model m) {
-
+	
 		// Compute some features
 		in[0] = m.getX(0) / 600.0 - 0.5;
 		in[1] = m.getY(0) / 600.0 - 0.5;
@@ -238,12 +254,17 @@ class NeuralAgent implements IAgent
 		{
 		//	System.out.println("i: " + i);
 			if(out[i] < -0.333)
-				beDefender(m, i);
+				beAggressor(m, i);
 			else if(out[i] > 0.333)
 				beAggressor(m, i);
 			else
 				beFlagAttacker(m, i);
 		}
+		
+		//beFlagAttacker(m, 0);
+		//beAggressor(m, 1);
+		//beDefender(m, 2);
+		
 	}
 }
 
