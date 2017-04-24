@@ -153,7 +153,6 @@ class NeuralAgent implements IAgent
 		// Find the opponent nearest to me
 		nearestOpponent(m, myX, myY);
 		
-		
 		if(index >= 0) {
 			float enemyX = m.getXOpponent(index);
 			float enemyY = m.getYOpponent(index);
@@ -182,23 +181,12 @@ class NeuralAgent implements IAgent
 					findBestDestination(m,i,Model.XFLAG, Model.YFLAG);
 					//m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
 				}
-				else {
-					m.setDestination(i, myX, myY); // Rest
-				}
+			//	else {
+			//		m.setDestination(i, myX, myY); // Rest
+			//	}
 			}
 		}
 		
-
-		int dead  = 0;
-		for(int x = 0; x < 3; x++){
-			//System.out.println("m.Energy of x" + x + ": " + m.getEnergyOpponent(x));
-			if(m.getEnergyOpponent(x) < 0)
-				dead++;
-		}
-		if(dead == 1){
-			//System.out.println("2 dead!");
-			beFlagAttacker(m,i);
-		}
 		// Try not to die
 		avoidBombs(m, i);
 	}
@@ -252,13 +240,34 @@ class NeuralAgent implements IAgent
 		// Do it
 		for(int i = 0; i < 3; i++)
 		{
-		//	System.out.println("i: " + i);
-			if(out[i] < -0.333)
-				beAggressor(m, i);
-			else if(out[i] > 0.333)
-				beAggressor(m, i);
-			else
-				beFlagAttacker(m, i);
+			
+			int dead  = 0;
+			for(int x = 0; x < 3; x++){
+				if(m.getEnergyOpponent(x) < 0)
+					dead++;
+			}
+			
+			
+			if(dead == 2){
+				if(i == 0)
+				beAggressor(m,i);
+				if(i==1)
+				beAggressor(m,i);
+				if(i==2)
+				beFlagAttacker(m,i);
+			}
+			else if(dead == 3){
+				beFlagAttacker(m,i);
+			}
+			else{
+			
+				if(out[i] < -0.333)
+					beDefender(m, i);
+				else if(out[i] > 0.333)
+					beAggressor(m, i);
+				else
+					beFlagAttacker(m, i);
+			}
 		}
 		
 		//beFlagAttacker(m, 0);

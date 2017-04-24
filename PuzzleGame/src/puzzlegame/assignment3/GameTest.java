@@ -241,8 +241,8 @@ class GameTest
 		//System.out.println(Controller.doBattleNoGui(new ReflexAgent(), new NeuralAgent(w)));
 		//System.out.println(Controller.doBattleNoGui(new Winner2015b(), new NeuralAgent(w2))); 
 		//System.out.println(Controller.doBattleNoGui(new Winner2015b(), new NeuralAgent(array3)));
-	//	Controller.doBattle(new NeuralAgentOld(list.get(4)), new NeuralAgent(list.get(2)));
-		Controller.doBattle(new NeuralAgentOld(list.get(5)), new NeuralAgent(list.get(2)));
+		//System.out.println(Controller.doBattleNoGui(new NeuralAgentOld(list.get(3)), new NeuralAgent(list.get(0))));
+		Controller.doBattle(new NeuralAgentOld(list.get(3)), new NeuralAgent(list.get(0)));
 
 		
 		
