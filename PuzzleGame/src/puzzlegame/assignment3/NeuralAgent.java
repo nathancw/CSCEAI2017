@@ -1,6 +1,12 @@
 // The contents of this file are dedicated to the public domain.
 // (See http://creativecommons.org/publicdomain/zero/1.0/)
 package puzzlegame.assignment3;
+
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.Stack;
+import java.util.TreeSet;
+
 class NeuralAgent implements IAgent
 {
 	int index; // a temporary value used to pass values around
@@ -82,6 +88,7 @@ class NeuralAgent implements IAgent
 
 	void beDefender(Model m, int i) {
 		// Find the opponent nearest to my flag
+		//System.out.println("BeDefender.");
 		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
 		if(index >= 0) {
 			float enemyX = m.getXOpponent(index);
@@ -109,7 +116,24 @@ class NeuralAgent implements IAgent
 
 	void beFlagAttacker(Model m, int i) {
 		// Head for the opponent's flag
+	/*	System.out.println("BeFlagAttacker.");
+		UCS ucs = new UCS();
+		int flagX = (int) ((Math.ceil(Model.XFLAG_OPPONENT) * 10) / 10);
+		int flagY = (int) ((Math.ceil(Model.YFLAG_OPPONENT) * 10) / 10);
+		
+		int sX = (int) ((m.getX(i) * 10) / 10);
+		int sY = (int) ((m.getY(i) * 10) / 10);
+		
+		Block next = ucs.uniform_cost_search(m, new Block(sX,sY,(float) 0.0,null,(float)0.0), 
+				new Block(flagX,flagY,(float) 0.0,null,(float)0.0));
+		
+		System.out.println("Flag: " + flagX + "," + flagY);
+		System.out.println("Next: " + next.x + ", " + next.y);
+		m.setDestination(i, next.x, next.y);
+		*/
 		m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+		
+		
 
 		// Shoot at the flag if I can hit it
 		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
@@ -121,6 +145,7 @@ class NeuralAgent implements IAgent
 	}
 
 	void beAggressor(Model m, int i) {
+	//	System.out.println("BeAgressor.");
 		float myX = m.getX(i);
 		float myY = m.getY(i);
 
@@ -190,6 +215,7 @@ class NeuralAgent implements IAgent
 		// Do it
 		for(int i = 0; i < 3; i++)
 		{
+		//	System.out.println("i: " + i);
 			if(out[i] < -0.333)
 				beDefender(m, i);
 			else if(out[i] > 0.333)
@@ -198,4 +224,178 @@ class NeuralAgent implements IAgent
 				beFlagAttacker(m, i);
 		}
 	}
+}
+
+
+class Block {
+	  public float cost;
+	  Block parent;
+	  float x;
+	  float y;
+	  float heuristic = 0;
+	  Block(float x, float y, float cost, Block par, float h) {
+		  this.cost = cost;
+		  this.parent = par;
+		  this.x = x;
+		  this.y = y;
+		  this.heuristic = h;
+
+	  }
+	  
+	  void print(){
+		  System.out.println("(" + x + "," + y + ") cost : " + cost);
+	  }
+	}
+
+class BlockComparator implements Comparator<Block>
+{
+	public int compare(Block a, Block b)
+	{
+		
+		  Float x1 = a.x;
+	        Float x2 = b.x;
+	        int floatCompare1 = x1.compareTo(x2);
+
+	        if (floatCompare1 != 0) {
+	            return floatCompare1;
+	        } else {
+	            Float y1 = a.y;
+	            Float y2 = b.y;
+	            return y1.compareTo(y2);
+	        }
+	    }
+		
+		
+	}
+class CostComparator implements Comparator<Block>
+{
+	public int compare(Block a, Block b)
+	{
+			if((a.cost + a.heuristic) > (b.cost + b.heuristic))
+				return 1;
+			else if((a.cost + a.heuristic) < (b.cost + b.heuristic))
+					return -1;
+		return 0;
+	}
+}  
+
+
+class UCS {
+	BlockComparator comp;
+	CostComparator costComp;
+	PriorityQueue<Block> frontier;
+	TreeSet<Block> beenThere;
+	Stack<Block> path;
+	boolean aStar;
+	float heuristic;
+	Block goal;
+	float lowest;
+	public UCS(){
+
+	}
+	
+	/*private float calculateHeur(float xCurr, float yCurr, float xGoal,float yGoal) {
+		float pow1 = (float) Math.pow((xCurr - xGoal),2);
+		float pow2 = (float) Math.pow((yCurr - yGoal),2);
+		float total = (float) ((Math.sqrt(pow1 + pow2))/lowest);
+		//System.out.println("Lowest: " + lowest +  "total: " + total);
+		return total;
+	}*/
+	
+	  public Block uniform_cost_search(Model m, Block startState, Block goal) {
+		  
+		boolean found = false;
+		comp = new BlockComparator();
+		costComp = new CostComparator();
+		frontier = new PriorityQueue<Block>(costComp);
+		beenThere = new TreeSet<Block>(comp);
+		path = new Stack<Block>();
+	    frontier.add(startState);
+	    beenThere.add(startState);
+	    this.goal = goal;
+	    
+	    while(frontier.size() > 0) {
+	      Block s = (Block) frontier.remove(); // get lowest-cost state
+	      
+	      //s.print();
+	      if(s.x == goal.x && s.y == goal.y){
+	    	  goal.parent = s;
+	    	  found = true;
+	    	  break;
+	      }
+	      //
+	      MoveState(m,s,10,-10); //x+10, y-10;
+	      MoveState(m,s,10,0); //x+10
+	      MoveState(m,s,10,10); //x+10, y+10
+	      MoveState(m,s,0,10); //y+10
+	      MoveState(m,s,-10,10);//x-10, y+10
+	      MoveState(m,s,-10,0); //x-10
+	      MoveState(m,s,-10,-10);//x-10, y-10
+	      MoveState(m,s,0,-10); //y-10
+	     
+	    } 
+	    
+	    if(!found){
+	    	System.out.println("Can't find route");
+	    	//return new Stack();
+	    }
+	    
+	    //m.visited.clear();
+	    
+	  
+	    
+	    Block current = goal;
+	    while(current!=null){ 	
+	    	path.add(current);
+	    	current = current.parent;
+	    	
+	    }
+	    
+	    //Pop one before
+	   if(path.size() > 2)
+	    path.pop();
+
+	    return path.pop();
+	    //throw new RuntimeException("There is no path to the goal");
+	  }
+
+	public PriorityQueue<Block> getFrontier(){
+		return frontier;
+	}
+	  
+	private void MoveState(Model m, Block root, float xMove, float yMove) {
+		float x = (float) (root.x+xMove);
+		float y = (float) (root.y+yMove);
+		//System.out.println("Checking: " + root.x + " ," + root.y);
+		if(x < 1199 && y < 599 && y > 0 && x > 0){
+			
+			float cost;
+			if((Math.abs(xMove) + Math.abs(yMove))==20)
+				cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2));//Cost is speed associated with the terrain square AND distance you will travel at that speed
+			else
+				cost =  (float)(10/(m.getTravelSpeed(x,y)));
+			
+			float heur = 0;
+			
+			cost = cost + root.cost;
+			
+			
+			Block child = new Block(x,y,cost,root, heur);
+			Block oldChild;
+		
+			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
+				oldChild = beenThere.floor(child); //find the block with the same x,y
+				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
+			        oldChild.cost =  cost; //new parent
+			        oldChild.parent = root;
+			      }	
+			}
+			else {	//If its not in the set, add it to the set, dont care about cost
+				frontier.add(child);
+				beenThere.add(child);
+			}	
+		}
+		
+	}
+
 }
