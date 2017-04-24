@@ -19,7 +19,7 @@ class GameTest
 	static double[] evolveWeights() throws IOException
 	{
 
-		FileWriter fw = new FileWriter("outputfilename", true);
+		FileWriter fw = new FileWriter("winners.txt", true);
 	    BufferedWriter bw = new BufferedWriter(fw);
 	    PrintWriter out = new PrintWriter(bw);
 			
@@ -41,14 +41,14 @@ class GameTest
 		
 		
 		int numEvolutions = 0;
-		int maxEvolutions = 1000;
+		int maxEvolutions = 3000;
 		
 		
 		while(numEvolutions < maxEvolutions){
 		//Add mutation
 		//int mutationCount = 0;
-		int mutationRate = 200; //1/mutation rate to be mutated
-		double mutationAverage = 0.7;
+		int mutationRate = 400; //1/mutation rate to be mutated
+		double mutationAverage = 0.3;
 		for(int i = 0; i < 100; i++)
 		{
 			double[] chromosome = population.row(i);
@@ -216,9 +216,7 @@ class GameTest
 			try {
 				if(Controller.doBattleNoGui(new ReflexAgent(), new NeuralAgent(population.row(x))) == -1){
 					count++;
-					try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-				              new FileOutputStream("winners.txt"), "utf-8"))) {
-				   writer.write(Arrays.toString(population.row(x))+ "\n\n\n"); }
+					
 				
 				}
 				
