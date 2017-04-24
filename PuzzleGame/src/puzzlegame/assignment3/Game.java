@@ -23,7 +23,7 @@ class Game
 			
 			//add parameter mutation
 			chromosome[291] = (double) r.nextInt(100) + 1; //mutation rate
-			chromosome[292] = 1.9; //mutation average
+			chromosome[292] = r.nextDouble() - 0.2; //mutation average
 			chromosome[293] = (double) r.nextInt(10); //number of Tounraments
 			chromosome[294] = (double) r.nextInt(40) + 60; //percentage to kill loser
 		}
@@ -36,7 +36,7 @@ class Game
 		
 		
 		int numEvolutions = 0;
-		int maxEvolutions = 400;
+		int maxEvolutions = 3000;
 		
 		
 		while(numEvolutions < maxEvolutions){
@@ -66,7 +66,7 @@ class Game
 		//Choose pair of chromosones
 		int r1 = r.nextInt(100); //Pick random tournaments
 		double [] chromosome = population.row(r1);
-		int numTournaments = 2;
+		int numTournaments = 5;
 		int probToSurvive = (int) chromosome[294];
 		
 		for(int x = 0; x < numTournaments; x++){
