@@ -47,7 +47,7 @@ class GameTest
 		while(numEvolutions < maxEvolutions){
 		//Add mutation
 		//int mutationCount = 0;
-		int mutationRate = 400; //1/mutation rate to be mutated
+		int mutationRate = 200; //1/mutation rate to be mutated
 		double mutationAverage = 0.3;
 		for(int i = 0; i < 100; i++)
 		{
