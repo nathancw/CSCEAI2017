@@ -1,4 +1,8 @@
 package puzzlegame.assignment3;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -26,14 +30,14 @@ class GameTest
 		
 		
 		int numEvolutions = 0;
-		int maxEvolutions = 400;
+		int maxEvolutions = 800;
 		
 		
 		while(numEvolutions < maxEvolutions){
 		//Add mutation
 		//int mutationCount = 0;
-		int mutationRate = 100; //1/mutation rate to be mutated
-		double mutationAverage = 0.7;
+		int mutationRate = 400; //1/mutation rate to be mutated
+		double mutationAverage = 0.5;
 		for(int i = 0; i < 100; i++)
 		{
 			double[] chromosome = population.row(i);
@@ -55,7 +59,7 @@ class GameTest
 		//Natural Selection
 		
 		//Choose pair of chromosones
-		int numTournaments = 20;
+		int numTournaments = 10;
 		int probToSurvive = 66;
 		for(int x = 0; x < numTournaments; x++){
 			int cNum1 = r.nextInt(100); //First chromosome num
@@ -63,16 +67,17 @@ class GameTest
 			
 			double [] chromoOne = population.row(cNum1);
 			double [] chromoTwo = population.row(cNum2);
-			
-			//if(numEvolutions > maxEvolutions-20)
-				//System.out.println("Chromo one: " + Arrays.toString(chromoOne));
-			
+
 			//If they aren't the same chromosome, continue to do battle! Also check if they aren't a dead chromo
 			//I'm assuming the chances of 80 being zero are near to none
-			if(cNum1 != cNum2 && chromoOne[0]!=0.0 && chromoTwo[0] !=0.0){
-				
-				//System.out.print("Battling " + Arrays.toString(chromoOne) + " and " + Arrays.toString(chromoTwo) + " ");
-				//IAgent red = new IAgent();
+			
+			while(cNum1 == cNum2 || chromoOne[1]==0.0 || chromoTwo[1] ==0.0){
+				cNum1 = r.nextInt(100);
+				cNum2 = r.nextInt(100); 
+				chromoTwo = population.row(cNum2);
+				chromoOne = population.row(cNum1);
+			}
+
 				
 				int winner = 0;
 				try {
@@ -117,7 +122,7 @@ class GameTest
 					//System.out.println("Nobody won. Killing both.");
 				}
 				
-			}	
+				
 		}//End Natural Selection for loop
 		
 		//Replenish the population!
@@ -208,7 +213,9 @@ class GameTest
 			try {
 				if(Controller.doBattleNoGui(new ReflexAgent(), new NeuralAgent(population.row(x))) == -1){
 					count++;
-					//return population.row(x);
+					try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+				              new FileOutputStream("winners.txt"), "utf-8"))) {
+				   writer.write(Arrays.toString(population.row(x))+ "\n\n\n"); }
 				
 				}
 				
