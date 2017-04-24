@@ -1448,7 +1448,7 @@ public class WebbNathaniel {
 				
 				//add parameter mutation
 
-				chromosome[291] = 200;
+				chromosome[291] = 300;
 				chromosome[292] = 0.2;
 				chromosome[293] = 5;
 				chromosome[294] = 0;
@@ -1560,7 +1560,7 @@ public class WebbNathaniel {
 					
 					//Find whos the most similiar
 					double[] dad = population.row(parent1);
-					int bestMom = 0;
+					int bestMom = r.nextInt(100);
 					double parentDifference = 5000000; //We have hugely different parents
 					double testDifference;
 					for(int x = 0; x < numCandidates; x++){
@@ -1568,7 +1568,7 @@ public class WebbNathaniel {
 						//System.out.println("Test mom: " + Arrays.toString(testMom));
 						testDifference = 0;
 						
-						for(int c = 0; c < 291; c++){
+						/*for(int c = 0; c < 291; c++){
 							testDifference+= Math.pow((dad[c] - testMom[c]), 2);
 						}
 						if(testDifference < parentDifference && testMom[0]!=0.0){
@@ -1576,7 +1576,7 @@ public class WebbNathaniel {
 							bestMom = candidates[x];
 							//System.out.println("Test diff: " + testDifference + " parentDiff: " + parentDifference + "bestMom: " + bestMom);
 						}
-							
+						*/	
 					}//Done finding best parent
 					
 					//Lets mate!
@@ -1594,6 +1594,12 @@ public class WebbNathaniel {
 					}
 
 				}
+				
+				population.row(i)[291] = 300;
+				population.row(i)[292] = 0.2;
+				population.row(i)[293] = 5;
+				population.row(i)[294] = 0;
+				
 			}
 
 			numEvolutions++;
