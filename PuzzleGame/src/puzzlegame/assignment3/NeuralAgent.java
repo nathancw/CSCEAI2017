@@ -82,9 +82,19 @@ class NeuralAgent implements IAgent
 			float dy = m.getY(i) - m.getBombTargetY(index);
 			if(dx == 0 && dy == 0)
 				dx = 1.0f;
-			
-			//findBestDestination(m,i,m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
-			m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
+			//float newX = (m.getX(i) + dx * 10.0f);
+			//float newY = (m.getY(i) + dy * 10.0f);
+			/*
+			if(newX < 0)
+				newX = newX * - 1;
+			if(newY < 0)
+				newY = newY * -1;
+			*/
+			float newX = Model.XFLAG;
+			float newY = Model.YFLAG;
+			//System.out.println("Passing: " + newX +  "," + newY);
+			findBestDestination(m,i,newX,newY);
+			//m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
 		}
 	}
 
@@ -97,7 +107,8 @@ class NeuralAgent implements IAgent
 			float enemyY = m.getYOpponent(index);
 
 			// Stay between the enemy and my flag
-			m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
+			findBestDestination(m,i,0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
+			//m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 
 			// Throw boms if the enemy gets close enough
 			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
@@ -105,7 +116,8 @@ class NeuralAgent implements IAgent
 		}
 		else {
 			// Guard the flag
-			m.setDestination(i, Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
+			findBestDestination(m,i,Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
+		//	m.setDestination(i, Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
 		}
 
 		// If I don't have enough energy to throw a bomb, rest
@@ -162,7 +174,7 @@ class NeuralAgent implements IAgent
 
 				// If the opponent is close enough to shoot at me...
 				if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
-					//findBestDestination(m,i,myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY));
+					//findBestDestination(m,i,Model.XFLAG, Model.YFLAG);
 					m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
 				}
 				else {

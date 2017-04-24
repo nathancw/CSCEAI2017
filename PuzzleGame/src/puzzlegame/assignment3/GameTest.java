@@ -230,8 +230,8 @@ class GameTest
 			int wins2016a = 0;
 			for(int c = 0; c < list.size(); c++){
 			
-			//	int val = Controller.doBattleNoGui(new NeuralAgent(list.get(c)), new NeuralAgent(list.get(x)));
-				int val = 0;
+				int val = Controller.doBattleNoGui(new NeuralAgentOld(list.get(c)), new NeuralAgent(list.get(x)));
+				//int val = 0;
 				if(val == -1)
 					normalWins++;				
 			}
@@ -250,6 +250,7 @@ class GameTest
 			
 			if(val2 == -1)
 				wins2016a++;
+			
 			System.out.println("Normal wins: " + normalWins + " 2015b wins: " + wins2015b  + " 2015a wins: " + wins2015a + " wins2016a: " + wins2016a);
 			
 		}
@@ -257,8 +258,8 @@ class GameTest
 		//System.out.println(Arrays.toString(w) + "\n" + "\n");
 		//System.out.println(Controller.doBattleNoGui(new ReflexAgent(), new NeuralAgent(w)));
 		//System.out.println(Controller.doBattleNoGui(new Winner2015b(), new NeuralAgent(w2))); 
-		Controller.doBattle(new Winner2015a(), new NeuralAgent(array3));
-		
+		//System.out.println(Controller.doBattleNoGui(new Winner2015b(), new NeuralAgent(array3)));
+		Controller.doBattle(new NeuralAgentOld(list.get(4)), new NeuralAgent(list.get(2)));
 
 		
 		
