@@ -82,6 +82,8 @@ class NeuralAgent implements IAgent
 			float dy = m.getY(i) - m.getBombTargetY(index);
 			if(dx == 0 && dy == 0)
 				dx = 1.0f;
+			
+			//findBestDestination(m,i,m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
 			m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
 		}
 	}
@@ -116,25 +118,11 @@ class NeuralAgent implements IAgent
 
 	void beFlagAttacker(Model m, int i) {
 		// Head for the opponent's flag
-	/*	System.out.println("BeFlagAttacker.");
-		UCS ucs = new UCS();
-		int flagX = (int) ((Math.ceil(Model.XFLAG_OPPONENT) * 10) / 10);
-		int flagY = (int) ((Math.ceil(Model.YFLAG_OPPONENT) * 10) / 10);
-		
-		int sX = (int) ((m.getX(i) * 10) / 10);
-		int sY = (int) ((m.getY(i) * 10) / 10);
-		
-		Block next = ucs.uniform_cost_search(m, new Block(sX,sY,(float) 0.0,null,(float)0.0), 
-				new Block(flagX,flagY,(float) 0.0,null,(float)0.0));
-		
-		System.out.println("Flag: " + flagX + "," + flagY);
-		System.out.println("Next: " + next.x + ", " + next.y);
-		m.setDestination(i, next.x, next.y);
-		*/
-		m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+		findBestDestination(m,i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS, Model.YFLAG_OPPONENT);
 		
 		
-
+		//m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+		
 		// Shoot at the flag if I can hit it
 		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
 			m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
@@ -163,7 +151,8 @@ class NeuralAgent implements IAgent
 				float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
 				dx *= t;
 				dy *= t;
-				m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+				findBestDestination(m,i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+				//m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
 
 				// Throw bombs
 				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
@@ -173,6 +162,7 @@ class NeuralAgent implements IAgent
 
 				// If the opponent is close enough to shoot at me...
 				if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
+					//findBestDestination(m,i,myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY));
 					m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
 				}
 				else {
@@ -183,6 +173,25 @@ class NeuralAgent implements IAgent
 
 		// Try not to die
 		avoidBombs(m, i);
+	}
+
+	private void findBestDestination(Model m, int i, float f, float g) {
+		UCS ucs = new UCS();
+		int destX = (int) (Math.ceil(f) / 10) * 10;
+		int destY = (int) (Math.ceil(g) / 10) * 10;
+		
+		int sX = (int) ((m.getX(i)) / 10) * 10;
+		int sY = (int) ((m.getY(i)) / 10) * 10;
+		
+	//	System.out.println(i + " BeFlagAttacker. Sx: " + sX + " Sy: " + sY);
+		Block next = ucs.uniform_cost_search(m, new Block(sX,sY,(float) 0.0,null,(float)0.0), 
+				new Block(destX,destY,(float) 0.0,null,(float)0.0));
+		
+		//System.out.println("Flag: " + flagX + "," + flagY);
+		//System.out.println("Next: " + next.x + ", " + next.y);
+		m.setDestination(i, next.x, next.y);
+		
+		
 	}
 
 	public void update(Model m) {
@@ -337,6 +346,7 @@ class UCS {
 	    
 	    if(!found){
 	    	System.out.println("Can't find route");
+	    	System.out.println("Start: " + startState.x + "," + startState.y + " goal: " + goal.x + "," + goal.y);
 	    	//return new Stack();
 	    }
 	    
@@ -352,8 +362,10 @@ class UCS {
 	    }
 	    
 	    //Pop one before
-	   if(path.size() > 2)
-	    path.pop();
+	   if(!(path.size() > 2))
+	    return startState;
+	   else
+		   path.pop();
 
 	    return path.pop();
 	    //throw new RuntimeException("There is no path to the goal");
@@ -366,7 +378,7 @@ class UCS {
 	private void MoveState(Model m, Block root, float xMove, float yMove) {
 		float x = (float) (root.x+xMove);
 		float y = (float) (root.y+yMove);
-		//System.out.println("Checking: " + root.x + " ," + root.y);
+	//	System.out.println("Checking: " + x + " ," + y);
 		if(x < 1199 && y < 599 && y > 0 && x > 0){
 			
 			float cost;
