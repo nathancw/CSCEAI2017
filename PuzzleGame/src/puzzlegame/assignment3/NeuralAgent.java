@@ -4,6 +4,7 @@ package puzzlegame.assignment3;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Stack;
 import java.util.TreeSet;
 
@@ -92,9 +93,19 @@ class NeuralAgent implements IAgent
 			*/
 			float newX = Model.XFLAG;
 			float newY = Model.YFLAG;
-			//System.out.println("Passing: " + newX +  "," + newY);
+			
+			//if(m.getX(i) < 200)
+			//	newX = (m.getX(i) + dx * 10.0f);
+			//if((m.getEnergyOpponent(0) < 0 || m.getEnergyOpponent(1) < 0 || m.getEnergyOpponent(2) < 0)){
+			//	newX = Model.XFLAG_OPPONENT;
+			//	newY = Model.YFLAG_OPPONENT;
+			//}
+			//float newX = Model.XFLAG;
+			//float newY = Model.YFLAG;
+			if(m.getX(i) > 300)
 			findBestDestination(m,i,newX,newY);
-			//m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
+			else
+				m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
 		}
 	}
 
@@ -131,11 +142,6 @@ class NeuralAgent implements IAgent
 	void beFlagAttacker(Model m, int i) {
 		// Head for the opponent's flag
 		findBestDestination(m,i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS, Model.YFLAG_OPPONENT);
-		
-		//beAggressor(m,i);
-		
-		//m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
-		
 		// Shoot at the flag if I can hit it
 		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
 			m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
@@ -149,7 +155,8 @@ class NeuralAgent implements IAgent
 	//	System.out.println("BeAgressor.");
 		float myX = m.getX(i);
 		float myY = m.getY(i);
-
+		
+	//	shootFlag(m,i);
 		// Find the opponent nearest to me
 		nearestOpponent(m, myX, myY);
 		
@@ -171,10 +178,9 @@ class NeuralAgent implements IAgent
 				// Throw bombs
 				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 					m.throwBomb(i, enemyX, enemyY);
-					m.throwBomb(i, enemyX, enemyY);
 				}
 			}
-			else {
+			/*else {
 
 				// If the opponent is close enough to shoot at me...
 				if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
@@ -184,13 +190,24 @@ class NeuralAgent implements IAgent
 			//	else {
 			//		m.setDestination(i, myX, myY); // Rest
 			//	}
-			}
+			}*/
 		}
 		
 		// Try not to die
 		avoidBombs(m, i);
 	}
-
+	
+	
+	
+	void shootFlag(Model m, int i){
+	//	findBestDestination(m,i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS, Model.YFLAG_OPPONENT);
+		
+		// Shoot at the flag if I can hit it
+		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
+			m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
+		}
+	}
+	
 	private void findBestDestination(Model m, int i, float f, float g) {
 		UCS ucs = new UCS();
 		int destX = (int) (Math.ceil(f) / 10) * 10;
@@ -246,28 +263,31 @@ class NeuralAgent implements IAgent
 				if(m.getEnergyOpponent(x) < 0)
 					dead++;
 			}
-			
-			
-			if(dead == 2){
+		
+			/*if(dead == 2 || dead == 1){
+				
 				if(i == 0)
 				beAggressor(m,i);
 				if(i==1)
 				beAggressor(m,i);
 				if(i==2)
-				beFlagAttacker(m,i);
+					//if(dead ==2)
+						//beFlagAttacker(m,i);
+					//else
+						beDefender(m,i);
 			}
 			else if(dead == 3){
 				beFlagAttacker(m,i);
 			}
 			else{
-			
+			*/
 				if(out[i] < -0.333)
 					beDefender(m, i);
 				else if(out[i] > 0.333)
 					beAggressor(m, i);
 				else
-					beFlagAttacker(m, i);
-			}
+					beAggressor(m, i);
+		//	}
 		}
 		
 		//beFlagAttacker(m, 0);
