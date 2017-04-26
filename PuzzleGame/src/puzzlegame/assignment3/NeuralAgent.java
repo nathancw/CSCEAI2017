@@ -17,6 +17,7 @@ class NeuralAgent implements IAgent
 	boolean heuristicFound = false;
 	UCS ucs;
 	float lowestVal = -100;
+	int accum;
 
 	NeuralAgent(double[] weights) {
 		in = new double[20];
@@ -26,6 +27,7 @@ class NeuralAgent implements IAgent
 		nn.layers.add(new LayerTanh(10, 3));
 		setWeights(weights);
 		ucs = new UCS(true);
+		accum = 0;
 	}
 
 	public void reset() {
@@ -99,6 +101,7 @@ class NeuralAgent implements IAgent
 			float newX = Model.XFLAG;
 			float newY = Model.YFLAG;
 			
+			
 			//if(m.getX(i) < 200)
 			//	newX = (m.getX(i) + dx * 10.0f);
 			//if((m.getEnergyOpponent(0) < 0 || m.getEnergyOpponent(1) < 0 || m.getEnergyOpponent(2) < 0)){
@@ -115,19 +118,35 @@ class NeuralAgent implements IAgent
 	}
 
 	void beDefender(Model m, int i) {
+		
+		float myX = m.getX(i);
+		float myY = m.getY(i);
 		// Find the opponent nearest to my flag
 		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
 		if(index >= 0) {
 			float enemyX = m.getXOpponent(index);
 			float enemyY = m.getYOpponent(index);
-
+			float dx = myX - enemyX;
+			float dy = myY - enemyY;
+			float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
+			dx *= t;
+			dy *= t;
+			
 			// Stay between the enemy and my flag
 			findBestDestination(m,i,0.6f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 			//m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 
-			// Throw boms if the enemy gets close enough
-			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
+			// Throw bombs
+			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 				m.throwBomb(i, enemyX, enemyY);
+			}
+			else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25 ) ) {
+				float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
+				float throwX = dx * factor + enemyX;
+				float throwY = dy * factor + enemyY;
+				//System.out.println("---------------------------------------------------");
+				m.throwBomb(i,throwX,throwY);
+			}
 		}
 		//else {
 			// Guard the flag
@@ -179,18 +198,15 @@ class NeuralAgent implements IAgent
 				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 					m.throwBomb(i, enemyX, enemyY);
 				}
-			}
-			else {
-
-				// If the opponent is close enough to shoot at me...
-				if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
-					findBestDestination(m,i,Model.XFLAG, Model.YFLAG);
-					//m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
+				else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25 ) ) {
+					float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
+					float throwX = dx * factor + enemyX;
+					float throwY = dy * factor + enemyY;
+					//System.out.println("---------------------------------------------------");
+					m.throwBomb(i,throwX,throwY);
 				}
-			//	else {
-			//		m.setDestination(i, myX, myY); // Rest
-			//	}
 			}
+			
 		}
 
 		
@@ -259,41 +275,19 @@ class NeuralAgent implements IAgent
 		double[] out = nn.forwardProp(in);
 
 		// Do it
-		for(int i = 0; i < 3; i++)
-		{
-			/*
-			int dead  = 0;
-			for(int x = 0; x < 3; x++){
-				if(m.getEnergyOpponent(x) < 0)
-					dead++;
-			}
-		
-			if(dead == 2 || dead == 1){
-				
-				if(i == 0)
-				beAggressor(m,i);
-				if(i==1)
-				beAggressor(m,i);
-				if(i==2)
-					//if(dead ==2)
-						//beFlagAttacker(m,i);
-					//else
-						beDefender(m,i);
-			}
-			else if(dead == 3){
-				beFlagAttacker(m,i);
-			}
-			else{
-			*/
+		if(accum>150){
+			for(int i = 0; i < 3; i++)
+			{
+			
 				if(out[i] < -0.333)
 					beDefender(m, i);
 				else if(out[i] > 0.333)
 					beAggressor(m, i);
 				else
 					beAggressor(m, i);
-			//}
+			}
 		}
-		
+		accum++;
 	
 	}
 	

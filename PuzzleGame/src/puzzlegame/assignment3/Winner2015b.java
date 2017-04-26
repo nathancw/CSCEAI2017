@@ -185,6 +185,7 @@ class Winner2015b implements IAgent
 		}
 		
 		private void shootEnemy(Enemy enemy) {
+			//System.out.println("dis2: " + Math.sqrt(enemy.distance)+ " < " + Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25));
 			//Center the shot on the enemy if I can
 			if (enemy.distance <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
 				shoot(model.getXOpponent(enemy.index), model.getYOpponent(enemy.index));
