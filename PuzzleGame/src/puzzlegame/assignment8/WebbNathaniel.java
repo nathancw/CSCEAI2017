@@ -1,360 +1,503 @@
 package puzzlegame.assignment8;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Stack;
+import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.awt.image.BufferedImage;
 import java.awt.Color;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.imageio.ImageIO;
 
 
-public class WebbNathaniel {
+
+public class WebbNathaniel implements IAgent{
+
+	///////////BEGIN NEURAL AGENT /////////////////////
+
+	int index; // a temporary value used to pass values around
+	NeuralNet nn;
+	double[] in;
+	boolean heuristicFound = false;
+	UCS ucs;
+	float lowestVal = -100;
+	int accum;
 	
-	static class ReflexAgent implements IAgent
-	{
-		int index; // a temporary value used to pass values around
-
-		ReflexAgent() {
-		}
-
-		public void reset() {
-		}
-
-		public static float sq_dist(float x1, float y1, float x2, float y2) {
-			return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-		}
-
-		float nearestBombTarget(Model m, float x, float y) {
-			index = -1;
-			float dd = Float.MAX_VALUE;
-			for(int i = 0; i < m.getBombCount(); i++) {
-				float d = sq_dist(x, y, m.getBombTargetX(i), m.getBombTargetY(i));
-				if(d < dd) {
-					dd = d;
-					index = i;
-				}
-			}
-			return dd;
-		}
-
-		float nearestOpponent(Model m, float x, float y) {
-			index = -1;
-			float dd = Float.MAX_VALUE;
-			for(int i = 0; i < m.getSpriteCountOpponent(); i++) {
-				if(m.getEnergyOpponent(i) < 0)
-					continue; // don't care about dead opponents
-				float d = sq_dist(x, y, m.getXOpponent(i), m.getYOpponent(i));
-				if(d < dd) {
-					dd = d;
-					index = i;
-				}
-			}
-			return dd;
-		}
-
-		void avoidBombs(Model m, int i) {
-			if(nearestBombTarget(m, m.getX(i), m.getY(i)) <= 2.0f * Model.BLAST_RADIUS * Model.BLAST_RADIUS) {
-				float dx = m.getX(i) - m.getBombTargetX(index);
-				float dy = m.getY(i) - m.getBombTargetY(index);
-				if(dx == 0 && dy == 0)
-					dx = 1.0f;
-				m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
-			}
-		}
-
-		void beDefender(Model m, int i) {
-			// Find the opponent nearest to my flag
-			nearestOpponent(m, Model.XFLAG, Model.YFLAG);
-			if(index >= 0) {
-				float enemyX = m.getXOpponent(index);
-				float enemyY = m.getYOpponent(index);
-
-				// Stay between the enemy and my flag
-				m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
-
-				// Throw boms if the enemy gets close enough
-				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
-					m.throwBomb(i, enemyX, enemyY);
-			}
-			else {
-				// Guard the flag
-				m.setDestination(i, Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
-			}
-
-			// If I don't have enough energy to throw a bomb, rest
-			if(m.getEnergySelf(i) < Model.BOMB_COST)
-				m.setDestination(i, m.getX(i), m.getY(i));
-
-			// Try not to die
-			avoidBombs(m, i);
-		}
-
-		void beFlagAttacker(Model m, int i) {
-			// Head for the opponent's flag
-			m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
-
-			// Shoot at the flag if I can hit it
-			if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
-				m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
-			}
-
-			// Try not to die
-			avoidBombs(m, i);
-		}
-
-		void beAggressor(Model m, int i) {
-			float myX = m.getX(i);
-			float myY = m.getY(i);
-
-			// Find the opponent nearest to me
-			nearestOpponent(m, myX, myY);
-			if(index >= 0) {
-				float enemyX = m.getXOpponent(index);
-				float enemyY = m.getYOpponent(index);
-
-				if(m.getEnergySelf(i) >= m.getEnergyOpponent(index)) {
-
-					// Get close enough to throw a bomb at the enemy
-					float dx = myX - enemyX;
-					float dy = myY - enemyY;
-					float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
-					dx *= t;
-					dy *= t;
-					m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
-
-					// Throw bombs
-					if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
-						m.throwBomb(i, enemyX, enemyY);
-				}
-				else {
-
-					// If the opponent is close enough to shoot at me...
-					if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
-						m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
-					}
-					else {
-						m.setDestination(i, myX, myY); // Rest
-					}
-				}
-			}
-
-			// Try not to die
-			avoidBombs(m, i);
-		}
-
-		public void update(Model m) {
-			beFlagAttacker(m, 0);
-			beAggressor(m, 1);
-			beDefender(m, 2);
-		}
+	WebbNathaniel() {
+		//double [] weights = Evolution.evolveWeights();
+		double[] weights = {0.033101794598140576, 0.037885967845811296, -0.010245821016055846, -0.005325714499720422, 0.02609789360537013, -0.051314335380896046, 0.0131376512920218, -0.004074246713508772, -0.03602663504005055, 0.05582829203673031, 0.013194125217806031, 0.03995132978984181, 0.014489825140693632, 0.03331587372577749, 0.014183776752876208, -0.03654507436259152, 0.05856180044886969, -0.01600106789520113, -0.018827240046945987, 0.01106146978531165, -0.02904078090461616, -0.004047356508723848, -0.01554378389817107, -0.008662871627529782, -0.009574249212672968, -0.0014097343651446389, -0.008690556357140177, -0.007730930702677045, 0.006105659867405041, 0.05249324615214148, 0.03284119370856591, 0.03870358073203198, -0.016906520491366806, 0.03405075067414181, -0.008521092923461603, 0.025364386622247118, 0.047009364802602094, -0.0261261528764004, -0.0548921848317076, -0.04561914641977185, 0.0023022531066960207, 0.018588635250707766, -0.021028458856189078, 0.0041117259109367515, 0.022431335539909704, 0.03578470535765151, 0.011098931077523183, 0.04376252065622871, 0.02387560145493179, -0.01235124312723438, -0.023967910443034136, 0.0011880487379009395, 0.03801928053511724, -0.01764268660756441, -0.009169757504298352, 0.006410184759688387, 0.01935886111095156, -0.007485526548319205, 0.009772892920694807, 0.003742341746080831, -0.006837602897118956, 0.06635734034046235, 0.0663612422457823, 0.01807402268480109, -0.02433522140223349, 0.0032304445912384565, -0.019796163436163517, -0.007383310632922518, 0.03391830461726024, 0.04360649582850156, 0.02667156475592968, -0.006748853412839305, 0.0633710431010912, 0.056918015907448265, 0.0011424424981043727, -0.022981407647789744, 0.03483878671615743, -0.028938394563472424, 0.00740916607890347, -0.08399550822292906, 0.014675829468644723, -0.04827468233465803, -0.016626178665516366, -0.0026409621515945505, -0.033970121687917645, 0.01846382710892023, 0.010404585724005239, 0.024918928563352684, -0.024353141900611466, 0.015032830705879657, 0.018765621357363944, -0.0339403101845969, -0.0018350574968773944, 0.049648359200637183, 0.02492949111252097, -0.021075181843117692, 0.03177457650912261, -0.03040821988640727, 0.0860020035854431, -0.06670875370407235, -0.016696019142308137, 0.004938106357220146, 0.0015205920599384347, -0.007925436658267034, 0.026728144617340282, 0.005237369431255913, -0.004705448219475299, 0.002080871635293955, 0.009318824164744317, 0.04254724566422331, -0.008304417350881053, -0.015321639390109183, -0.0033974381169097003, 0.45142089789930884, -0.05571097210559532, 0.06330942511001778, 0.015299058920039847, 0.008594349824234212, -0.00584446362616833, -0.0031815366559280705, 0.0020699835438378225, 0.0012920526432923607, -0.0170495325453104, -0.029021260453762115, -0.04467129628852391, 0.005851489599067348, 0.001062941589005009, 0.02589193285626173, -0.037507470465699716, 0.025750690908390054, 0.03588432553773679, 0.03318747938929816, 0.046369230496549785, -0.021737235617078153, 0.03446222146527446, 0.00904234205524542, 0.004647070666584825, -0.04001480070478174, 0.019752411330411904, -0.0017652313544024628, -0.048308481721174024, -0.028559940161052354, 0.022416320201267687, 0.027709735718042704, 0.014667890960857792, 0.005011956400496257, -0.05398769051595626, 0.04564840249465279, 0.002376947680171644, 0.006121341128658331, -0.01272766561798929, 0.01438602478943998, 0.02469093905450042, 7.429952843194479E-4, -0.05751894254343031, 0.04562072010578245, -0.035857559178683836, -0.01941948723321831, -0.07160594101392095, -0.043940745117054744, 0.02663503823766137, 0.033186205473539676, -0.051770598694217275, -0.00512963017872312, -0.03062667677809932, 0.03472697034054046, 0.013677206051888192, 0.144968099982142, -0.023190400253054338, -0.011730925272374506, 0.003413021565261132, -0.03344687061751878, 0.013538425846246094, -0.022183752750521705, 0.010486521282051683, 0.023541068400944203, 0.014708941045257665, -0.03942414237734884, -0.005018092150268439, 0.0031071895256851814, -0.02874596715309553, -0.024811519374128028, 0.004692326610849445, 0.009690318186421206, 0.04713381863590584, -0.028572661407483622, -0.008591605074599877, -0.01050665462601138, -0.029639870819968626, 0.02001506220550968, -0.011604418526691867, 0.02116411442203858, 0.03226548131525112, -0.0032210576039093434, -0.017408937694982602, 0.004565708776401782, -0.027722337340256812, -0.03131435106370965, -0.03446825198567018, 0.025974590400805322, 0.04538214955205185, -0.020207641537758534, 0.010528615636385682, -0.0013467575221006876, 0.02567253446287197, 0.0540328788457866, -0.021633457876455375, 0.05838996631135127, 0.030253759822884037, 0.016562609935255556, -8.300098751963401E-4, -0.011617438753422409, 0.04210332709666795, 0.048301814851713434, -0.016977168063844663, 0.001092007669816094, 0.03118547386387713, 0.014517630800882938, 0.007800701862217221, 0.053612766204767515, 0.0012572108417527273, 0.014577252343278875, 0.0018578535971752325, 0.0050696686213194155, -0.03260110355012511, 0.027363470514176425, 0.010734096868695132, 0.02005159964393262, -0.048532996623713846, 0.013515994185717441, -0.044225856633565645, -0.038317114070664966, 0.021747848069325927, 0.039689956136373584, 0.015518041537775362, 0.012303146258509525, -0.0025677751442162457, 0.011261648883798903, 0.05271450879249941, -6.258421045728557E-4, -0.009173238566344622, 0.024836474150307927, -0.021591421349880877, 0.005635337760286306, -0.008053948887021302, 0.025614091495329512, -5.430009657451895E-4, 0.022012657239611943, -0.01655753016407906, -0.015042092975940089, 0.010450853227475817, -0.060500025630312496, 0.04100146894207475, -0.0594579202831297, -0.030404141521393632, 0.003810631506517905, -0.04828718826691137, -0.00824376268919517, -0.018900346263147596, -0.01753651548691498, 0.009934155041176876, 0.04499212575743443, 4.600755746631654E-4, 0.015761038364398374, 5.740484776593654E-4, -0.0332142605404036, -0.021569969334981363, 0.011500425127884408, -0.01771070993944168, -1.9727319749026387E-4, 0.0674148495613735, 0.016132956526673, -0.04947918188958408, -3.968718323952612E-4, 0.03398338071071778, 0.05300693899239984, -0.050994478195426615, -0.009921204237936748, -0.018595330990398784, -0.023699636992463243, 0.029911443955383553, 0.004810592200276789, -0.0262311020267402, 0.01822357671619329, -0.04790459309274039, 0.052389518860816935, -0.008745500624445483, -0.019466624712343745, 0.019802451986000766, 0.015002235599486269, -0.035692988735743204};
+		in = new double[20];
+		nn = new NeuralNet();
+		nn.layers.add(new LayerTanh(in.length, 8));
+		nn.layers.add(new LayerTanh(8, 10));
+		nn.layers.add(new LayerTanh(10, 3));
+		setWeights(weights);
+		ucs = new UCS(true);
+		accum = 0;
 	}
 	
 	
-	static class NeuralAgent implements IAgent
-	{
-		int index; // a temporary value used to pass values around
-		NeuralNet nn;
-		double[] in;
-
-		NeuralAgent(double[] weights) {
-			in = new double[20];
-			nn = new NeuralNet();
-			nn.layers.add(new LayerTanh(in.length, 8));
-			nn.layers.add(new LayerTanh(8, 10));
-			nn.layers.add(new LayerTanh(10, 3));
-			setWeights(weights);
-		}
-
-		public void reset() {
-		}
-
-		/// Returns the number of weights necessary to fully-parameterize this agent
-		int countWeights() {
-			int n = 0;
-			for(int i = 0; i < nn.layers.size(); i++)
-				n += nn.layers.get(i).countWeights();
-			return n;
-		}
-
-
-		/// Sets the parameters of this agent with the specified weights
-		void setWeights(double[] weights) {
-			if(weights.length != countWeights())
-				throw new IllegalArgumentException("Wrong number of weights. Got " + Integer.toString(weights.length) + ", expected " + Integer.toString(countWeights()));
-			int start = 0;
-			for(int i = 0; i < nn.layers.size(); i++)
-				start += nn.layers.get(i).setWeights(weights, start);
-		}
-
-
-		public static float sq_dist(float x1, float y1, float x2, float y2) {
-			return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-		}
-
-		float nearestBombTarget(Model m, float x, float y) {
-			index = -1;
-			float dd = Float.MAX_VALUE;
-			for(int i = 0; i < m.getBombCount(); i++) {
-				float d = sq_dist(x, y, m.getBombTargetX(i), m.getBombTargetY(i));
-				if(d < dd) {
-					dd = d;
-					index = i;
-				}
-			}
-			return dd;
-		}
-
-		float nearestOpponent(Model m, float x, float y) {
-			index = -1;
-			float dd = Float.MAX_VALUE;
-			for(int i = 0; i < m.getSpriteCountOpponent(); i++) {
-				if(m.getEnergyOpponent(i) < 0)
-					continue; // don't care about dead opponents
-				float d = sq_dist(x, y, m.getXOpponent(i), m.getYOpponent(i));
-				if(d < dd) {
-					dd = d;
-					index = i;
-				}
-			}
-			return dd;
-		}
-
-		void avoidBombs(Model m, int i) {
-			if(nearestBombTarget(m, m.getX(i), m.getY(i)) <= 2.0f * Model.BLAST_RADIUS * Model.BLAST_RADIUS) {
-				float dx = m.getX(i) - m.getBombTargetX(index);
-				float dy = m.getY(i) - m.getBombTargetY(index);
-				if(dx == 0 && dy == 0)
-					dx = 1.0f;
-				m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
+	WebbNathaniel(double[] weights) {
+		
+		in = new double[20];
+		nn = new NeuralNet();
+		nn.layers.add(new LayerTanh(in.length, 8));
+		nn.layers.add(new LayerTanh(8, 10));
+		nn.layers.add(new LayerTanh(10, 3));
+		setWeights(weights);
+		ucs = new UCS(true);
+		accum = 0;
+	}
+	
+	public void reset() {
+	}
+	
+	/// Returns the number of weights necessary to fully-parameterize this agent
+	int countWeights() {
+		int n = 0;
+		for(int i = 0; i < nn.layers.size(); i++)
+			n += nn.layers.get(i).countWeights();
+		return n;
+	}
+	
+	
+	/// Sets the parameters of this agent with the specified weights
+	void setWeights(double[] weights) {
+		if(weights.length != countWeights())
+			throw new IllegalArgumentException("Wrong number of weights. Got " + Integer.toString(weights.length) + ", expected " + Integer.toString(countWeights()));
+		int start = 0;
+		for(int i = 0; i < nn.layers.size(); i++)
+			start += nn.layers.get(i).setWeights(weights, start);
+	}
+	
+	
+	public static float sq_dist(float x1, float y1, float x2, float y2) {
+		return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+	}
+	
+	float nearestBombTarget(Model m, float x, float y) {
+		index = -1;
+		float dd = Float.MAX_VALUE;
+		for(int i = 0; i < m.getBombCount(); i++) {
+			float d = sq_dist(x, y, m.getBombTargetX(i), m.getBombTargetY(i));
+			if(d < dd) {
+				dd = d;
+				index = i;
 			}
 		}
+		return dd;
+	}
+	
+	float nearestOpponent(Model m, float x, float y) {
+		index = -1;
+		float dd = Float.MAX_VALUE;
+		for(int i = 0; i < m.getSpriteCountOpponent(); i++) {
+			if(m.getEnergyOpponent(i) < 0)
+				continue; // don't care about dead opponents
+			float d = sq_dist(x, y, m.getXOpponent(i), m.getYOpponent(i));
+			if(d < dd) {
+				dd = d;
+				index = i;
+			}
+		}
+		return dd;
+	}
+	
+	void avoidBombs(Model m, int i) {
+		if(nearestBombTarget(m, m.getX(i), m.getY(i)) <= 2.0f * Model.BLAST_RADIUS * Model.BLAST_RADIUS) {
+			float dx = m.getX(i) - m.getBombTargetX(index);
+			float dy = m.getY(i) - m.getBombTargetY(index);
+			if(dx == 0 && dy == 0)
+				dx = 1.0f;
 
-		void beDefender(Model m, int i) {
-			// Find the opponent nearest to my flag
-			nearestOpponent(m, Model.XFLAG, Model.YFLAG);
-			if(index >= 0) {
-				float enemyX = m.getXOpponent(index);
-				float enemyY = m.getYOpponent(index);
+			float newX = Model.XFLAG;
+			float newY = Model.YFLAG;
 
-				// Stay between the enemy and my flag
-				m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
-
-				// Throw boms if the enemy gets close enough
-				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
+			findBestDestination(m,i,newX,newY);
+			//	m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
+		}
+	}
+	
+	void beDefender(Model m, int i) {
+		
+		float myX = m.getX(i);
+		float myY = m.getY(i);
+		// Find the opponent nearest to my flag
+		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
+		if(index >= 0) {
+			float enemyX = m.getXOpponent(index);
+			float enemyY = m.getYOpponent(index);
+			float dx = myX - enemyX;
+			float dy = myY - enemyY;
+			float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
+			dx *= t;
+			dy *= t;
+			
+			// Stay between the enemy and my flag
+			findBestDestination(m,i,0.6f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
+			//m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
+	
+			// Throw bombs
+			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
+				m.throwBomb(i, enemyX, enemyY);
+			}
+			else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25 ) ) {
+				float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
+				float throwX = dx * factor + enemyX;
+				float throwY = dy * factor + enemyY;
+				//System.out.println("---------------------------------------------------");
+				m.throwBomb(i,throwX,throwY);
+			}
+		}
+	
+		// Try not to die
+		avoidBombs(m, i);
+	}
+	
+	void beFlagAttacker(Model m, int i) {
+		// Head for the opponent's flag
+		findBestDestination(m,i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS, Model.YFLAG_OPPONENT);
+		// Shoot at the flag if I can hit it
+		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
+			m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
+		}
+	
+		// Try not to die
+		avoidBombs(m, i);
+	}
+	
+	void beAggressor(Model m, int i) {
+	
+		float myX = m.getX(i);
+		float myY = m.getY(i);
+		
+		shootFlag(m,i);
+		// Find the opponent nearest to me
+		nearestOpponent(m, myX, myY);
+		
+		if(index >= 0) {
+			float enemyX = m.getXOpponent(index);
+			float enemyY = m.getYOpponent(index);
+	
+			if(m.getEnergySelf(i) >= m.getEnergyOpponent(index)) {
+	
+				// Get close enough to throw a bomb at the enemy
+				float dx = myX - enemyX;
+				float dy = myY - enemyY;
+				float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
+				dx *= t;
+				dy *= t;
+				findBestDestination(m,i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+				//m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+	
+				// Throw bombs
+				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 					m.throwBomb(i, enemyX, enemyY);
-			}
-			else {
-				// Guard the flag
-				m.setDestination(i, Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
-			}
-
-			// If I don't have enough energy to throw a bomb, rest
-			if(m.getEnergySelf(i) < Model.BOMB_COST)
-				m.setDestination(i, m.getX(i), m.getY(i));
-
-			// Try not to die
-			avoidBombs(m, i);
-		}
-
-		void beFlagAttacker(Model m, int i) {
-			// Head for the opponent's flag
-			m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
-
-			// Shoot at the flag if I can hit it
-			if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
-				m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
-			}
-
-			// Try not to die
-			avoidBombs(m, i);
-		}
-
-		void beAggressor(Model m, int i) {
-			float myX = m.getX(i);
-			float myY = m.getY(i);
-
-			// Find the opponent nearest to me
-			nearestOpponent(m, myX, myY);
-			if(index >= 0) {
-				float enemyX = m.getXOpponent(index);
-				float enemyY = m.getYOpponent(index);
-
-				if(m.getEnergySelf(i) >= m.getEnergyOpponent(index)) {
-
-					// Get close enough to throw a bomb at the enemy
-					float dx = myX - enemyX;
-					float dy = myY - enemyY;
-					float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
-					dx *= t;
-					dy *= t;
-					m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
-
-					// Throw bombs
-					if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
-						m.throwBomb(i, enemyX, enemyY);
 				}
-				else {
-
-					// If the opponent is close enough to shoot at me...
-					if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
-						m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY)); // Flee
-					}
-					else {
-						m.setDestination(i, myX, myY); // Rest
-					}
+				else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25 ) ) {
+					float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
+					float throwX = dx * factor + enemyX;
+					float throwY = dy * factor + enemyY;
+					//System.out.println("---------------------------------------------------");
+					m.throwBomb(i,throwX,throwY);
 				}
 			}
-
-			// Try not to die
-			avoidBombs(m, i);
+			
 		}
-
-		public void update(Model m) {
-
-			// Compute some features
-			in[0] = m.getX(0) / 600.0 - 0.5;
-			in[1] = m.getY(0) / 600.0 - 0.5;
-			in[2] = m.getX(1) / 600.0 - 0.5;
-			in[3] = m.getY(1) / 600.0 - 0.5;
-			in[4] = m.getX(2) / 600.0 - 0.5;
-			in[5] = m.getY(2) / 600.0 - 0.5;
-			in[6] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-			in[7] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-			in[8] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-			in[9] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-			in[10] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-			in[11] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-			in[12] = m.getEnergySelf(0);
-			in[13] = m.getEnergySelf(1);
-			in[14] = m.getEnergySelf(2);
-			in[15] = m.getEnergyOpponent(0);
-			in[16] = m.getEnergyOpponent(1);
-			in[17] = m.getEnergyOpponent(2);
-			in[18] = m.getFlagEnergySelf();
-			in[19] = m.getFlagEnergyOpponent();
-
-			// Determine what each agent should do
-			double[] out = nn.forwardProp(in);
-
-			// Do it
+	
+		
+		// Try not to die
+		avoidBombs(m, i);
+	}
+	
+	
+	
+	void shootFlag(Model m, int i){
+	//	findBestDestination(m,i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS, Model.YFLAG_OPPONENT);
+		
+		// Shoot at the flag if I can hit it
+		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
+			m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
+		}
+	}
+	
+	private void findBestDestination(Model m, int i, float f, float g) {
+	
+		if(lowestVal == -100)
+			lowestVal = calculateLowest(m);
+		
+		int destX = (int) (Math.ceil(f) / 10) * 10;
+		int destY = (int) (Math.ceil(g) / 10) * 10;
+		
+		int sX = (int) ((m.getX(i)) / 10) * 10;
+		int sY = (int) ((m.getY(i)) / 10) * 10;
+		
+	//	System.out.println(i + " BeFlagAttacker. Sx: " + sX + " Sy: " + sY);
+		Block next = ucs.uniform_cost_search(m, new Block(sX,sY,(float) 0.0,null,(float)0.0), 
+				new Block(destX,destY,(float) 0.0,null,(float)0.0), lowestVal);
+		
+		//System.out.println("Flag: " + flagX + "," + flagY);
+		//System.out.println("Next: " + next.x + ", " + next.y);
+		m.setDestination(i, next.x, next.y);
+		
+		
+	}
+	
+	public void update(Model m) {
+	
+		// Compute some features
+		in[0] = m.getX(0) / 600.0 - 0.5;
+		in[1] = m.getY(0) / 600.0 - 0.5;
+		in[2] = m.getX(1) / 600.0 - 0.5;
+		in[3] = m.getY(1) / 600.0 - 0.5;
+		in[4] = m.getX(2) / 600.0 - 0.5;
+		in[5] = m.getY(2) / 600.0 - 0.5;
+		in[6] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
+		in[7] = nearestOpponent(m, m.getX(1), m.getY(1)) / 600.0 - 0.5;
+		in[8] = nearestOpponent(m, m.getX(2), m.getY(2)) / 600.0 - 0.5;
+		in[9] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
+		in[10] = nearestBombTarget(m, m.getX(1), m.getY(1)) / 600.0 - 0.5;
+		in[11] = nearestBombTarget(m, m.getX(2), m.getY(2)) / 600.0 - 0.5;
+		in[12] = m.getEnergySelf(0);
+		in[13] = m.getEnergySelf(1);
+		in[14] = m.getEnergySelf(2);
+		in[15] = m.getEnergyOpponent(0);
+		in[16] = m.getEnergyOpponent(1);
+		in[17] = m.getEnergyOpponent(2);
+		in[18] = m.getFlagEnergySelf();
+		in[19] = m.getFlagEnergyOpponent();
+	
+		// Determine what each agent should do
+		double[] out = nn.forwardProp(in);
+	
+		// Do it
+		if(accum>150){
 			for(int i = 0; i < 3; i++)
 			{
+			
 				if(out[i] < -0.333)
 					beDefender(m, i);
 				else if(out[i] > 0.333)
 					beAggressor(m, i);
 				else
-					beFlagAttacker(m, i);
+					beAggressor(m, i);
 			}
 		}
+		accum++;
+	
 	}
+	
+	float calculateLowest(Model m) {
+		
+		float temp;
+		float lowestVal = 0;
+		if(!heuristicFound){
+		for(int x = 0; x < 1200; x+=10)
+			for(int y =0; y < 600; y+=10){
+				temp = (m.getTravelSpeed(x,y));
+				if(temp > lowestVal)
+					lowestVal = temp;
+			}
+		}
+		return lowestVal;
+	}
+
+	
+	
+	
+	
+	static class Block {
+	public float cost;
+	Block parent;
+	float x;
+	float y;
+	float heuristic = 0;
+	Block(float x, float y, float cost, Block par, float h) {
+		  this.cost = cost;
+		  this.parent = par;
+		  this.x = x;
+		  this.y = y;
+		  this.heuristic = h;
+	
+	}
+	
+	void print(){
+		  System.out.println("(" + x + "," + y + ") cost : " + cost);
+	}
+	}
+	
+	static class BlockComparator implements Comparator<Block>
+	{
+	public int compare(Block a, Block b)
+	{
+		
+		  Float x1 = a.x;
+	      Float x2 = b.x;
+	      int floatCompare1 = x1.compareTo(x2);
+	
+	      if (floatCompare1 != 0) {
+	          return floatCompare1;
+	      } else {
+	          Float y1 = a.y;
+	          Float y2 = b.y;
+	          return y1.compareTo(y2);
+	      }
+	  }
+		
+		
+	}
+	static class CostComparator implements Comparator<Block>
+	{
+	public int compare(Block a, Block b)
+	{
+			if((a.cost + a.heuristic) > (b.cost + b.heuristic))
+				return 1;
+			else if((a.cost + a.heuristic) < (b.cost + b.heuristic))
+					return -1;
+		return 0;
+	}
+	}  
+	
+	
+	static class UCS {
+	BlockComparator comp;
+	CostComparator costComp;
+	PriorityQueue<Block> frontier;
+	TreeSet<Block> beenThere;
+	Stack<Block> path;
+	boolean aStar;
+	Block goal;
+	float lowest;
+	
+	public UCS(boolean a){
+		this.aStar = a;
+	}
+	
+	private float calculateHeur(float xCurr, float yCurr, float xGoal,float yGoal) {
+		float pow1 = (float) Math.pow((xCurr - xGoal),2);
+		float pow2 = (float) Math.pow((yCurr - yGoal),2);
+		float total = (float) ((Math.sqrt(pow1 + pow2))/lowest);
+		//System.out.println("Lowest: " + lowest +  "total: " + total);
+		return total;
+	}
+	
+	public Block uniform_cost_search(Model m, Block startState, Block goal, float lowest) {
+		this.lowest = lowest;
+		
+		boolean found = false;
+		comp = new BlockComparator();
+		costComp = new CostComparator();
+		frontier = new PriorityQueue<Block>(costComp);
+		beenThere = new TreeSet<Block>(comp);
+		path = new Stack<Block>();
+	  frontier.add(startState);
+	  beenThere.add(startState);
+	  this.goal = goal;
+	  
+	  while(frontier.size() > 0) {
+	    Block s = (Block) frontier.remove(); // get lowest-cost state
+	    
+	    //s.print();
+	    if(s.x == goal.x && s.y == goal.y){
+	  	  goal.parent = s;
+	  	  found = true;
+	  	  break;
+	    }
+	    //
+	    MoveState(m,s,10,-10); //x+10, y-10;
+	    MoveState(m,s,10,0); //x+10
+	    MoveState(m,s,10,10); //x+10, y+10
+	    MoveState(m,s,0,10); //y+10
+	    MoveState(m,s,-10,10);//x-10, y+10
+	    MoveState(m,s,-10,0); //x-10
+	    MoveState(m,s,-10,-10);//x-10, y-10
+	    MoveState(m,s,0,-10); //y-10
+	   
+	  } 
+	  
+	  if(!found){
+	  	System.out.println("Can't find route");
+	  	System.out.println("Start: " + startState.x + "," + startState.y + " goal: " + goal.x + "," + goal.y);
+	  	//return new Stack();
+	  }
+	  
+	  
+	  Block current = goal;
+	  while(current!=null){ 	
+	  	path.add(current);
+	  	current = current.parent;
+	  	
+	  }
+	  
+	  //Pop one before
+	 if(!(path.size() > 2))
+	  return startState;
+	 else
+		   path.pop();
+	
+	  return path.pop();
+	  //throw new RuntimeException("There is no path to the goal");
+	}
+	
+	public PriorityQueue<Block> getFrontier(){
+		return frontier;
+	}
+	
+	private void MoveState(Model m, Block root, float xMove, float yMove) {
+		float x = (float) (root.x+xMove);
+		float y = (float) (root.y+yMove);
+	//	System.out.println("Checking: " + x + " ," + y);
+		if(x < 1199 && y < 599 && y > 0 && x > 0){
+			
+			float cost;
+			if((Math.abs(xMove) + Math.abs(yMove))==20)
+				cost = (float)(10/(m.getTravelSpeed(x,y))*Math.sqrt(2));//Cost is speed associated with the terrain square AND distance you will travel at that speed
+			else
+				cost =  (float)(10/(m.getTravelSpeed(x,y)));
+			
+			float heur = 0;
+			if(aStar){
+				heur = calculateHeur(x,y,goal.x,goal.y);
+				cost = cost + root.cost;
+			}
+			else{
+				cost = cost + root.cost;
+			}
+			
+			
+			Block child = new Block(x,y,cost,root, heur);
+			Block oldChild;
+		
+			if(beenThere.contains(child)){ //If the new block is already in the set, then we need to check cost
+				oldChild = beenThere.floor(child); //find the block with the same x,y
+				if(cost < oldChild.cost) { //If the root cost + new cost is less than old cost, then update new cost and make 
+			        oldChild.cost =  cost; //new parent
+			        oldChild.parent = root;
+			      }	
+			}
+			else {	//If its not in the set, add it to the set, dont care about cost
+				frontier.add(child);
+				beenThere.add(child);
+			}	
+		}
+		
+	}
+	
+	}
+	
+	///////////END NEURAL AGENT /////////////////////
 	
 	static public class Vec
 	{
@@ -1431,227 +1574,161 @@ public class WebbNathaniel {
 			ImageIO.write(image, "png", new File("viz.png"));
 		}
 	}
+////////////////////////////////////////
+//////BEGIN Evolution Algorithm /////
+static class Evolution
+{
 
-	static class Game
+	static double[] evolveWeights() throws IOException
 	{
-
-		static double[] evolveWeights()
+			
+		// Create a random initial population
+		Random r = new Random();
+		Matrix population = new Matrix(100, 291);
+		for(int i = 0; i < 100; i++)
 		{
-			// Create a random initial population
-			Random r = new Random();
-			Matrix population = new Matrix(100, 295);
-			for(int i = 0; i < 100; i++)
-			{
-				double[] chromosome = population.row(i);
-				for(int j = 0; j < 291; j++)
-					chromosome[j] = 0.03 * r.nextGaussian();
-				
-				//add parameter mutation
+			double[] chromosome = population.row(i);
+			for(int j = 0; j < chromosome.length; j++)
+				chromosome[j] = 0.03 * r.nextGaussian();
+		}
 
-				chromosome[291] = 300;
-				chromosome[292] = 0.2;
-				chromosome[293] = 5;
-				chromosome[294] = 0;
+
+		
+		int numEvolutions = 0;
+		int maxEvolutions = 3000;
+		
+		
+		while(numEvolutions < maxEvolutions){
+		//Add mutation
+		//int mutationCount = 0;
+		int mutationRate = 200; //1/mutation rate to be mutated
+		double mutationAverage = 0.3;
+		for(int i = 0; i < 100; i++)
+		{
+			double[] chromosome = population.row(i);
+			for(int j = 0; j < chromosome.length; j++)
 				
-				/*chromosome[291] = (double) r.nextInt(700); //mutation rate
-				chromosome[292] = r.nextDouble() - 0.2; //mutation average
-				chromosome[293] = (double) r.nextInt(10); //number of Tounraments
-				chromosome[294] = (double) r.nextInt(40) + 60; //percentage to kill loser*/
+				if(r.nextInt(mutationRate)==0){
+					//Pick random chromosone
+					int mut = r.nextInt(291);
+					double gaus = r.nextGaussian();
+					chromosome[mut]+= mutationAverage * gaus;
 				}
+		}
+		//Done adding mutations
+		
+		//Natural Selection
+		
+		//Choose pair of chromosones
+		int numTournaments = 5;
+		int probToSurvive = 66;
+		for(int x = 0; x < numTournaments; x++){
+			int cNum1 = r.nextInt(100); //First chromosome num
+			int cNum2 = r.nextInt(100); //Second chromosome num
+			
+			double [] chromoOne = population.row(cNum1);
+			double [] chromoTwo = population.row(cNum2);
 
-
-			// Evolve the population
-			// todo: YOUR CODE WILL START HERE.
-			//       Please write some code to evolve this population.
-			//       (For tournament selection, you will need to call Controller.doBattleNoGui(agent1, agent2).)
+			//If they aren't the same chromosome, continue to do battle! Also check if they aren't a dead chromo
+			//I'm assuming the chances of 80 being zero are near to none
 			
-			
-			int numEvolutions = 0;
-			int maxEvolutions = 700;
-			
-			
-			while(numEvolutions < maxEvolutions){
-			//Add mutation
-			//int mutationCount = 0;
-			int mutationRate; //1/mutation rate to be mutated
-			double mutationAverage; 
-			for(int i = 0; i < 100; i++)
-			{
-				double[] chromosome = population.row(i);
-				mutationRate = (int) chromosome[291]; //Get rate
-				mutationAverage = chromosome[292]; //Get average
-				//System.out.println("rate: " + mutationRate + " avg: "+ mutationAverage);
-				for(int j = 0; j < chromosome.length; j++)
-					
-					if(r.nextInt(mutationRate)==0){
-						//Pick random chromosone value to mutate
-						int mut = r.nextInt(291);
-						double gaus = r.nextGaussian();
-						chromosome[mut]+= mutationAverage * gaus;
-					
-					}
-			}
-			//Done adding mutations
-			
-			//Natural Selection
-			
-			//Choose pair of chromosones
-			int r1 = r.nextInt(100); //Pick random tournaments
-			double [] chromosome = population.row(r1);
-			int numTournaments = (int) chromosome[293];
-			int probToSurvive = (int) chromosome[294];
-			
-			for(int x = 0; x < numTournaments; x++){
-
-				int cNum1 = r.nextInt(100); //First chromosome num
-				int cNum2 = r.nextInt(100); //Second chromosome num
-				double [] chromoTwo = population.row(cNum2);
-				double [] chromoOne = population.row(cNum1);
-				
-				//If they aren't the same chromosome, continue to do battle! Also check if they aren't a dead chromo
-				//I'm assuming the chances of 80 being zero are near to none
-				if(cNum1 != cNum2 && chromoOne[0]!=0.0 && chromoTwo[0] !=0.0){
-					
-					int winner = 0;
-					try {
-						winner = Controller.doBattleNoGui(new NeuralAgent(getWeightsOnly(chromoOne)), new NeuralAgent(getWeightsOnly(chromoTwo)));
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
-					if(winner == 1){
-						for(int i = 0; i < chromoTwo.length; i++)
-							population.row(cNum2)[i] = 0; //Kill the chromoOne
-
-					}
-					else if(winner == -1){
-						for(int i = 0; i < chromoOne.length; i++)
-							population.row(cNum1)[i] = 0; //Kill the chromoOne
-
-					}
-					
-					
-				}	
-			}//End Natural Selection for loop
-			
-			//Replenish the population!
-			
-			int numCandidates = 5; //Not evolving this since it increases run time way way too much
-			double difference = 0.05;
-			for(int i = 0; i < 100; i++){
-				
-				//If its a dead chromo, make a baby!!
-				if(population.row(i)[0] == 0.0){
-					int parent1 = r.nextInt(100); //Pick first parent
-					
-					while(parent1==i || population.row(parent1)[0] ==0.0) //Make sure its not the same as the dead child
-						parent1 = r.nextInt(100);
-					
-					int candidates[] = new int[numCandidates];
-					int parent2 = 0;
-					for(int x = 0; x < numCandidates; x++){
-						parent2 = r.nextInt(100); //Pick second parent
-						
-						while(parent2 == parent1 || parent2 == i || population.row(parent2)[0] ==0.0) //Make sure its not the same as the dead child or the first parent
-							parent2 = r.nextInt(100);
-						candidates[x] = parent2;
-					
-					}
-					
-					//Find whos the most similiar
-					double[] dad = population.row(parent1);
-					int bestMom = r.nextInt(100);
-					double parentDifference = 5000000; //We have hugely different parents
-					double testDifference;
-					for(int x = 0; x < numCandidates; x++){
-						double[] testMom = population.row(candidates[x]);
-						//System.out.println("Test mom: " + Arrays.toString(testMom));
-						testDifference = 0;
-						
-						/*for(int c = 0; c < 291; c++){
-							testDifference+= Math.pow((dad[c] - testMom[c]), 2);
-						}
-						if(testDifference < parentDifference && testMom[0]!=0.0){
-							parentDifference = testDifference;
-							bestMom = candidates[x];
-							//System.out.println("Test diff: " + testDifference + " parentDiff: " + parentDifference + "bestMom: " + bestMom);
-						}
-						*/	
-					}//Done finding best parent
-					
-					//Lets mate!
-					double[] mom = population.row(bestMom);
-					for(int x = 0; x < dad.length; x++){
-						int rand = r.nextInt(2);
-						
-						if(rand == 0){
-							population.row(i)[x] = dad[x];
-							
-						}
-						else{
-							population.row(i)[x] = mom[x];
-						}
-					}
-
-				}
-				
-				population.row(i)[291] = 300;
-				population.row(i)[292] = 0.2;
-				population.row(i)[293] = 5;
-				population.row(i)[294] = 0;
-				
+			while(cNum1 == cNum2 || chromoOne[1]==0.0 || chromoTwo[1] ==0.0){
+				cNum1 = r.nextInt(100);
+				cNum2 = r.nextInt(100); 
+				chromoTwo = population.row(cNum2);
+				chromoOne = population.row(cNum1);
 			}
 
-			numEvolutions++;
-			System.out.println("Evolution number: " + numEvolutions);
-		}//End of while
-
-
-
-			// Return an arbitrary member from the population
-			int num = r.nextInt(100);
-			int count = 0;
-			for(int x = 0; x < 100; x++){
+				int winner = 0;
 				try {
-					if(Controller.doBattleNoGui(new ReflexAgent(), new NeuralAgent(getWeightsOnly(population.row(x)))) == -1){
-						count++;
-						return population.row(x);
-					
-					}
-					
+					winner = Controller.doBattleNoGui(new WebbNathaniel(chromoOne), new WebbNathaniel(chromoTwo));
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			} 
-			System.out.println("won:" + count);
-			return population.row(num);
+
+				if(winner == 1){
+					for(int i = 0; i < chromoTwo.length; i++)
+						population.row(cNum2)[i] = 0; //Kill the chromoOne
+				}
+				else if(winner == -1){
+					for(int i = 0; i < chromoTwo.length; i++)
+						population.row(cNum1)[i] = 0; //Kill the chromoTWo	
+				}
+				
+				
+		}//End Natural Selection for loop
+		
+		//Replenish the population!
+		
+		int numCandidates = 5;
+		double difference = 0.05;
+		for(int i = 0; i < 100; i++){
+			
+			//If its a dead chromo, make a baby!!
+			if(population.row(i)[0] == 0.0){
+				int parent1 = r.nextInt(100); //Pick first parent
+				
+				while(parent1==i || population.row(parent1)[0] ==0.0) //Make sure its not the same as the dead child
+					parent1 = r.nextInt(100);
+				
+				int candidates[] = new int[numCandidates];
+				int parent2 = 0;
+				for(int x = 0; x < numCandidates; x++){
+					parent2 = r.nextInt(100); //Pick second parent
+					
+					while(parent2 == parent1 || parent2 == i || population.row(parent2)[0] ==0.0) //Make sure its not the same as the dead child or the first parent
+						parent2 = r.nextInt(100);
+					candidates[x] = parent2;			
+				}
+				
+				//Find whos the most similiar
+				double[] dad = population.row(parent1);
+				int bestMom = 0;
+				double parentDifference = 5000000; //We have hugely different parents
+				double testDifference;
+				for(int x = 0; x < numCandidates; x++){
+					double[] testMom = population.row(candidates[x]);
+					testDifference = 0;
+					
+					for(int c = 0; c < dad.length; c++){
+						testDifference+= Math.pow((dad[c] - testMom[c]), 2);
+					}
+					if(testDifference < parentDifference && testMom[0]!=0.0){
+						parentDifference = testDifference;
+						bestMom = candidates[x];
+					}
+						
+				}//Done finding best parent
+				
+				//Lets mate!
+				double[] mom = population.row(bestMom);
+				for(int x = 0; x < dad.length; x++){
+					int rand = r.nextInt(2);
+					
+					if(rand == 0){
+						population.row(i)[x] = dad[x];
+						
+					}
+					else{
+						population.row(i)[x] = mom[x];
+					}
+				}
+				
+			}
 		}
 
-	public static double[] getWeightsOnly(double[] c){
-		double[] newChromosome = new double[291];
-		for(int x = 0; x < 291; x++)
-			newChromosome[x] = c[x];
-		
-		return newChromosome;
-		
+		numEvolutions++;
+		System.out.println("Evolution number: " + numEvolutions);
+	}//End of while
+
+		return population.row(40);
 	}
-		
-		public static void main(String[] args) throws Exception
-		{
-			double[] w = evolveWeights();
-			
-			//double[] w = {1.4278062179093252, -0.8414658067512626, -3.430878069485397, -0.5530266700798886, -3.7339007174276717, -0.8271989009580576, -0.6865147401628494, -0.03869713902799515, -1.3806921654326125, 2.82242913120967, -0.9881675331449635, 2.885837730211544, -0.0058013211444239874, 5.078255543446284, 0.6267748150693737, 0.3285590569693366, 0.41050498765657784, -1.549613381323693, 0.8528682384816878, 1.5051028086458151, 1.3172907657501758, 3.6674043717425033, 1.054308872084251, -0.529803625255931, 1.664950175309028, 0.9658747920350554, -2.4344823539549334, -9.357918959529005E-4, 0.8590548427108929, 4.120906037644227, 3.1953840029126934, -0.3236926915185312, -0.049708527105420605, -0.016176689668226236, 0.021817964639907036, -1.1258030042411382, -0.8954386237409302, 0.5928425599268046, 2.3833773527779325, -0.5989372285582482, -0.004129206161506073, -4.22280302877334, 5.297672135645984, 4.017972623405293, -0.4014925640692525, 1.092304142746835, -2.1014456880214643, -4.125808036084513, -1.3910958126453326, 0.028562028878741905, -0.7648797695333228, 1.0715405393042952, -0.0429649162944304, -2.176979410916771, 0.05507403125424082, 2.0259868860649726, -0.2864410946819339, 0.029464799622009485, -0.403798268948381, -0.9286469835858872, 3.875835995216954, 0.007703429456867757, 1.1812341244413471, -1.6781289306429101, 0.40544420609098647, 0.011914996502699482, 0.021579065503858817, 0.0491275121392664, 0.5424253793028335, 1.9754773593778199, -0.02078035487788186, 0.015383935091437186, -1.4874290944857007, 1.3880191948104526, 1.007914221154071, -0.5201078416930786, 3.3765110039824204, 3.959113593419813, 4.056673290182691, -0.009469597020618042, -0.0933025624075741, -1.598519894622842, -1.1436546396602116, -0.006129120144730517, 5.592594219013105, -4.6849991047450485, -1.124178828890901, 2.2275096860375094, -1.6243912328608245, -3.9708823480901754, 3.2982308161336245, 1.5384100044229219, 0.016149544806168953, 5.041060176196333, 0.5247048918729021, 0.019421031039903305, -0.011254208650366193, -0.9835093475410646, -1.5317197265844957, 0.7231820684485295, -0.8145676059904946, 3.717669267156177, 1.6103793232106463, -1.779494608189427, -0.6725595721042474, 0.02147878414835494, -1.070809631361301, 1.4446747254561327, -0.019457866147553533, 2.9520334975666334, 2.024499075581172, 4.623912638110536, -1.0504686371604346, -4.935949983133007, -0.764917202541169, 0.07128896421003739, 0.4211672809920537, -2.3610975402664494, 0.025083410176054553, 0.003976425364538126, -1.7423205655134477, 1.2360226141222597, -1.962302423486924, -3.791955846773207, 2.618055038059088, -0.02342326736431585, 0.23804179443330864, -0.852531364957433, -0.532158255611194, 0.7338112737144074, -2.7568016933824624, 0.11302818942249883, -1.639792134742708, -0.22292573013783096, 3.406555614516079, 0.02639693309936592, 0.01407045216090671, 0.09423953747871322, 1.7741747695506496, 3.164962304805893, -0.28845922294544607, -1.6175010200088258, 1.7834869758205496, -0.00813436333100356, 0.029513035928942038, -4.717474335743921, -2.015642635344229, -1.1303957576011054, -0.0028959321275578917, 4.17797746491587, -0.013991496056339772, 1.3236739894447955, -2.1922142793992796, -0.7460959542608455, -0.10155408104496266, 0.8625560623167834, -2.316721317652577, -0.13993092809836205, -0.5085709506834823, -0.03242087818062531, -0.9138268523151487, -3.89869660176981, 3.7931705471324983, 0.7736022277058662, 0.045822559177341696, 1.153237736923841, -0.008634474022097069, -1.4372275698692605, 2.214895461804625, -1.5511884499540214, 0.0163081092147714, -0.3403174875022318, -0.018104340692746017, 0.045645555302397445, 0.3764180447861064, 1.0962117378834024, 1.5923730681601274, 3.1350556302921273, -1.6618135498067717, -3.609688679707067, -0.09851510791778564, -0.3260429425978005, 1.937210534588009, -3.402613721027617, 3.049417489110165, -2.302558246987306, -0.01606415400405845, 0.016630573285535653, 2.0275617069557716, -0.1807913665991987, -2.669002651733684, -1.5943492408889088, -2.67770818716589, 4.412455057447899, 2.1053550720458456, 1.8147547387464311, -3.855896728175755, -3.6722364635677067, -5.637348516455976, 0.8136094618750858, -0.03851645764863586, 2.0230061558308496, -0.8702016777480988, 1.868691488197543, -0.053796887700301006, -0.34745855696880223, -2.889428337117918, 0.017205831163966467, -5.1525890309288345, -0.13878439223017536, 2.0584945575667546, 1.48127430955818, 0.01121509363621666, 3.5873669309295932, 0.2431834988947903, -0.3132692394180031, 1.36879731291786, -2.0964148366865203, 2.45386013444738, 0.5523809653918539, 2.4449124533412188, 0.2519806346682446, 2.934664411525798, -1.1852024118998112, -4.48099658580024, -5.33616953889075, 0.758488600688501, 0.5175965834025389, -0.04848671135473764, -0.0726669380250318, -0.19871125730853967, 0.1377847849853322, -3.2004178273825032, -2.2102497753239585, -1.4135307645319994, 0.18020547640834006, -3.8482332453816643, 0.016170052250339816, -5.815331984171178, -0.3615651042554027, 2.1567636077013, 2.6039426640914036, 0.9959982656521289, 1.2165487980096932, -1.6688478983228394, -1.2352901038641082, 3.2143753302914173, -0.02525381902687531, 1.2829504796034583, 0.020882863882066827, 0.03126242395379702, 7.2025004525595495, -1.8531660452731549, 0.3123891975698835, 0.16169590637998957, 0.9293827795934003, 1.101791356818349, -2.657041572747084, 3.0766549926745093, 0.052816004239998084, 2.2535452559191618, 0.5117581127272232, 1.7825955522273098, -4.113031843050609, -0.3498172503931128, -1.4688725052381, 1.1544170955281734, 0.024996572018149633, 0.25895707143876723, -1.9461471562670027, 6.010018946578572, 0.014077317822364122, 4.907995564681843, 11.765932414279082, 0.47994659790790917, -0.04921634691221467, 0.028029631658977806, 0.004936227342838463, -0.461863575951299, 0.042035954906056196, -0.049688252529510035, 0.8284372033716509, 7.582748017159507E-4, -2.793977868818394, -0.6961662395060646, 0.657882445756073, -0.21293861999664077, 3.0854382705900787, -3.4600899283586206, -0.07231118201456643, -3.424624000289568};
-			//		System.out.println(Arrays.toString(w) + "\n" + "\n");
-			//System.out.println(Controller.doBattleNoGui(new SittingDuck(), new NeuralAgent(getWeightsOnly(w)))); //Looking for -1
-			//Controller.doBattle(new SittingDuck(), new NeuralAgent(w));
-			
-			//[1.4278062179093252, -0.8414658067512626, -3.430878069485397, -0.5530266700798886, -3.7339007174276717, -0.8271989009580576, -0.6865147401628494, -0.03869713902799515, -1.3806921654326125, 2.82242913120967, -0.9881675331449635, 2.885837730211544, -0.0058013211444239874, 5.078255543446284, 0.6267748150693737, 0.3285590569693366, 0.41050498765657784, -1.549613381323693, 0.8528682384816878, 1.5051028086458151, 1.3172907657501758, 3.6674043717425033, 1.054308872084251, -0.529803625255931, 1.664950175309028, 0.9658747920350554, -2.4344823539549334, -9.357918959529005E-4, 0.8590548427108929, 4.120906037644227, 3.1953840029126934, -0.3236926915185312, -0.049708527105420605, -0.016176689668226236, 0.021817964639907036, -1.1258030042411382, -0.8954386237409302, 0.5928425599268046, 2.3833773527779325, -0.5989372285582482, -0.004129206161506073, -4.22280302877334, 5.297672135645984, 4.017972623405293, -0.4014925640692525, 1.092304142746835, -2.1014456880214643, -4.125808036084513, -1.3910958126453326, 0.028562028878741905, -0.7648797695333228, 1.0715405393042952, -0.0429649162944304, -2.176979410916771, 0.05507403125424082, 2.0259868860649726, -0.2864410946819339, 0.029464799622009485, -0.403798268948381, -0.9286469835858872, 3.875835995216954, 0.007703429456867757, 1.1812341244413471, -1.6781289306429101, 0.40544420609098647, 0.011914996502699482, 0.021579065503858817, 0.0491275121392664, 0.5424253793028335, 1.9754773593778199, -0.02078035487788186, 0.015383935091437186, -1.4874290944857007, 1.3880191948104526, 1.007914221154071, -0.5201078416930786, 3.3765110039824204, 3.959113593419813, 4.056673290182691, -0.009469597020618042, -0.0933025624075741, -1.598519894622842, -1.1436546396602116, -0.006129120144730517, 5.592594219013105, -4.6849991047450485, -1.124178828890901, 2.2275096860375094, -1.6243912328608245, -3.9708823480901754, 3.2982308161336245, 1.5384100044229219, 0.016149544806168953, 5.041060176196333, 0.5247048918729021, 0.019421031039903305, -0.011254208650366193, -0.9835093475410646, -1.5317197265844957, 0.7231820684485295, -0.8145676059904946, 3.717669267156177, 1.6103793232106463, -1.779494608189427, -0.6725595721042474, 0.02147878414835494, -1.070809631361301, 1.4446747254561327, -0.019457866147553533, 2.9520334975666334, 2.024499075581172, 4.623912638110536, -1.0504686371604346, -4.935949983133007, -0.764917202541169, 0.07128896421003739, 0.4211672809920537, -2.3610975402664494, 0.025083410176054553, 0.003976425364538126, -1.7423205655134477, 1.2360226141222597, -1.962302423486924, -3.791955846773207, 2.618055038059088, -0.02342326736431585, 0.23804179443330864, -0.852531364957433, -0.532158255611194, 0.7338112737144074, -2.7568016933824624, 0.11302818942249883, -1.639792134742708, -0.22292573013783096, 3.406555614516079, 0.02639693309936592, 0.01407045216090671, 0.09423953747871322, 1.7741747695506496, 3.164962304805893, -0.28845922294544607, -1.6175010200088258, 1.7834869758205496, -0.00813436333100356, 0.029513035928942038, -4.717474335743921, -2.015642635344229, -1.1303957576011054, -0.0028959321275578917, 4.17797746491587, -0.013991496056339772, 1.3236739894447955, -2.1922142793992796, -0.7460959542608455, -0.10155408104496266, 0.8625560623167834, -2.316721317652577, -0.13993092809836205, -0.5085709506834823, -0.03242087818062531, -0.9138268523151487, -3.89869660176981, 3.7931705471324983, 0.7736022277058662, 0.045822559177341696, 1.153237736923841, -0.008634474022097069, -1.4372275698692605, 2.214895461804625, -1.5511884499540214, 0.0163081092147714, -0.3403174875022318, -0.018104340692746017, 0.045645555302397445, 0.3764180447861064, 1.0962117378834024, 1.5923730681601274, 3.1350556302921273, -1.6618135498067717, -3.609688679707067, -0.09851510791778564, -0.3260429425978005, 1.937210534588009, -3.402613721027617, 3.049417489110165, -2.302558246987306, -0.01606415400405845, 0.016630573285535653, 2.0275617069557716, -0.1807913665991987, -2.669002651733684, -1.5943492408889088, -2.67770818716589, 4.412455057447899, 2.1053550720458456, 1.8147547387464311, -3.855896728175755, -3.6722364635677067, -5.637348516455976, 0.8136094618750858, -0.03851645764863586, 2.0230061558308496, -0.8702016777480988, 1.868691488197543, -0.053796887700301006, -0.34745855696880223, -2.889428337117918, 0.017205831163966467, -5.1525890309288345, -0.13878439223017536, 2.0584945575667546, 1.48127430955818, 0.01121509363621666, 3.5873669309295932, 0.2431834988947903, -0.3132692394180031, 1.36879731291786, -2.0964148366865203, 2.45386013444738, 0.5523809653918539, 2.4449124533412188, 0.2519806346682446, 2.934664411525798, -1.1852024118998112, -4.48099658580024, -5.33616953889075, 0.758488600688501, 0.5175965834025389, -0.04848671135473764, -0.0726669380250318, -0.19871125730853967, 0.1377847849853322, -3.2004178273825032, -2.2102497753239585, -1.4135307645319994, 0.18020547640834006, -3.8482332453816643, 0.016170052250339816, -5.815331984171178, -0.3615651042554027, 2.1567636077013, 2.6039426640914036, 0.9959982656521289, 1.2165487980096932, -1.6688478983228394, -1.2352901038641082, 3.2143753302914173, -0.02525381902687531, 1.2829504796034583, 0.020882863882066827, 0.03126242395379702, 7.2025004525595495, -1.8531660452731549, 0.3123891975698835, 0.16169590637998957, 0.9293827795934003, 1.101791356818349, -2.657041572747084, 3.0766549926745093, 0.052816004239998084, 2.2535452559191618, 0.5117581127272232, 1.7825955522273098, -4.113031843050609, -0.3498172503931128, -1.4688725052381, 1.1544170955281734, 0.024996572018149633, 0.25895707143876723, -1.9461471562670027, 6.010018946578572, 0.014077317822364122, 4.907995564681843, 11.765932414279082, 0.47994659790790917, -0.04921634691221467, 0.028029631658977806, 0.004936227342838463, -0.461863575951299, 0.042035954906056196, -0.049688252529510035, 0.8284372033716509, 7.582748017159507E-4, -2.793977868818394, -0.6961662395060646, 0.657882445756073, -0.21293861999664077, 3.0854382705900787, -3.4600899283586206, -0.07231118201456643, -3.424624000289568]
-			//[-0.04202596109304965, -1.19274463259643, -0.8201516905362104, 2.0925533821287563, 1.8866004394655507, -0.3694257972568298, 0.15213484344281208, 1.1937982202438422, 0.022851234224101746, 0.870893635450261, 0.33641360340607707, 1.2899167272021996, 0.596466056745895, 1.385276765808045, 0.4897397172739073, 1.4814854219579505, 0.30612303635559646, 0.8272949507757844, 1.6554977382075666, 0.17036265053191202, -0.7933144174752881, -1.5502865889137434, 0.7741752662422746, -1.135859905077241, -0.008630748308777922, 1.3711690419307099, -0.010275812558147714, -0.647789417466728, -0.8394520570715265, 0.02559400088172995, 0.21024801720041666, -0.02729888265961223, -1.4098153996999943, -0.39027438370961587, -0.8153993800519114, 0.8882692583729558, 0.08775098296175288, -0.1595300479454702, 0.026254954889622862, -0.1889735565080679, -1.5010127387445058, 0.2515950055896642, 0.030552374337986576, 1.068584026845925, 0.5971865308830273, 0.0017069257691517078, -0.7977528254571721, -0.0034317153798423816, -0.48422334897329067, -0.6741011006685692, -0.28565327570223853, 0.42515131820132007, 0.4897759443148575, 0.057126847677891, -1.024609548751705, -0.0305676883234153, -0.012052663899796373, -0.352406956241039, 0.024674378611621358, -0.007753584423737005, 1.6803076733009519, -0.023250561539306065, 1.0870183106784876, -4.521279038549622, 1.9565870422370393, 0.011150560982637121, -0.1439794747501965, -0.15157565822210634, -0.6225559294273161, -2.6642391845339444, -0.9468016344457489, 0.5941483085509636, 0.5711703690676627, 0.10379925124604919, -0.0043135070066996975, 0.18396120307749741, -0.326810201829818, -1.4783045092510638, 0.4097368605394314, 0.05556624264490168, -0.3809494416761281, 1.9110265329566791, 1.0174685873947618, -0.4556200218680041, 0.5697266523503666, 1.1345185940452533, 0.6148365081641883, 0.8673769321389073, -0.7960891902552296, 0.3047492201670916, 0.03224634855905304, 0.08479020360598195, -0.01403618869097337, 2.391556115578495, 0.00207548540179155, 1.292064935990143, -0.5854991169678215, 0.016538148466026904, -1.161842126459817, -0.4996701176276368, -0.497261644758318, 0.5933273097148465, -0.24076528315515583, 1.0903842016883323, -0.01545626470898227, -0.007659204006921296, 0.40749920239169396, 0.7858128960501314, 0.03049605765123128, -0.1568853896823931, -0.04103916553160806, -0.6486122507075572, -0.033102699095138875, -0.14913152284913267, -0.053683834029854265, 1.5264026369986585, -0.5679596389015433, -0.0021064784414278536, -0.3845742171411388, -0.13133708625802817, -0.3536184978357301, 0.7466658754472897, -0.0012936954344933693, -1.317894927330312, 0.012814691305882928, 0.04059738653243608, 0.02794822263860571, -0.8020379973391674, 1.6242580135309133, -0.012584517648648059, -0.03297079255203283, 0.10876294273392201, -0.017449154483678397, 0.7969164741989385, -0.21226752503340468, -0.7390012387787176, 1.0298822940919299, 0.42955020465678395, -0.6660958752143495, 0.05073784899810985, 0.05810965662121376, 0.03695264255232812, -0.005725596299092663, 0.9760292477102983, -1.4546275993341526, -0.28723817012617614, 0.29444022501701017, 1.2702810785745795, 0.042864089122547834, 0.7598109196435316, 0.015257291195112162, -0.15136355371733518, -0.23019813783895754, -0.8935054279558976, 0.788521238062045, 0.2296042840543437, 0.6607941915529538, -0.2095877538414216, -0.7832968401304874, -0.011729714632165888, 0.01253726764837414, -1.814919983193163, -0.06385543597595555, -1.1862580349264527, 1.3148739303291193, -1.4585324672363311, 0.24880080220518241, -0.39262213106121174, -0.47322241536134135, 0.03299724834064486, 0.04213375784469808, 0.7067443495254221, -1.682580247259741, 0.0031953854596109346, 0.39805101111012203, 0.30513507554899655, 1.1279401428893474, -0.7721975812723363, -0.7913548443856214, -0.347086104225803, 0.4919858392877484, 0.9734966171119936, -1.5787335412384556, -0.40053210612896145, 0.7724154226597199, 0.09307637404705893, -1.4698975947087587, 2.1741723867811054, 1.236368221338807, -0.019118338704325274, -0.01473669948054731, -1.2477533562391, -0.5809125690778556, -0.6114515879745547, -0.7271941646008955, -0.047952451787726946, -0.22920824513050905, 1.1534182992230375, -0.00775621835808042, 1.3313434248973444, -0.883863863328346, 0.2999002744858053, -0.21813003538210377, -0.7331912954946018, 0.05573082720714251, -0.897483544893537, -0.37667939368671954, -0.03696570824482757, -0.21334111631438846, -0.32872665814860413, -0.5057492961467962, 3.8997503606966903, 0.17457937186155353, 0.7525341741745251, -0.007263922026518036, -0.06927177036225414, -0.018488058496954868, 1.100255140356369, 0.6977439648224287, -0.3393655609068078, -1.3225171117110164, -0.7938062898867284, 0.641860675639315, 1.2578400324784789, -0.2647781992165795, -0.0012854953102882762, -0.7557484024754053, -0.6415107858279814, -3.2879240571554615, 0.6634971995288793, -0.012224587632246186, 0.3793830681080449, -0.7378104009555263, -1.9284270207012177, 0.3670118097225893, 0.11079173636731937, 0.02875946741325313, -1.4842163024559993, -0.3887185592261491, -0.9839331062559209, -1.1222919962640796, 0.03665529119083636, 0.30727012894561595, -1.1591794825652013, -1.1478077227275694, 0.006958755370254929, -0.21790308622240379, 0.4964601239547349, -1.166735333031679, -0.8698378431576556, -2.845904131626832, -1.0278537146385274, 0.06598299317756896, 0.681994610647244, -0.3122574537639122, 1.2223366075011493, -0.3556515602540341, -0.15793841752725743, -1.5876760624867734, -0.7733167162446448, 4.1522662783376925, -0.02527083676765564, -0.0440620026246377, 0.9299628592658309, 0.02661343942020661, 0.1917522873756768, 0.8010697651355743, -0.4776744065195511, 0.2833773599866234, -0.6574646871543612, -0.04523021384506874, 0.9475845892444101, -2.267993590758275, -1.0672899310986828, 0.3815793032646689, -0.23010267287871983, -0.335109605947336, 0.020672178255933565, -1.7413650301575494, 0.06317539371749843, -0.05385887512384716, 0.9257359921135485, 0.6803717824186543, 0.26066687471934546, 0.36588058466388884, -1.016507647210125, -1.467333272092833, -0.013836952036398332, 0.5691096752893035, 0.9288640324288269, 0.5850175915148472]
+}
+//////END Evolution Algorithm /////
+	
 
-			
-		}
-
-	}
-
+	//public static void main(String[] args) throws Exception
+	//{
+	//	Controller.doBattle(new WebbNathaniel(), new WebbNathaniel());
+	//}
 }

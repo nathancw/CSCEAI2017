@@ -9,6 +9,7 @@ import java.util.Stack;
 import java.util.TreeSet;
 
 
+///////////BEGIN NEURAL AGENT /////////////////////
 class NeuralAgent implements IAgent
 {
 	int index; // a temporary value used to pass values around
@@ -488,3 +489,5 @@ class UCS {
 	}
 
 }
+
+///////////END NEURAL AGENT /////////////////////
