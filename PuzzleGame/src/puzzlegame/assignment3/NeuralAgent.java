@@ -8,11 +8,15 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.TreeSet;
 
+
 class NeuralAgent implements IAgent
 {
 	int index; // a temporary value used to pass values around
 	NeuralNet nn;
 	double[] in;
+	boolean heuristicFound = false;
+	UCS ucs;
+	float lowestVal = -100;
 
 	NeuralAgent(double[] weights) {
 		in = new double[20];
@@ -21,6 +25,7 @@ class NeuralAgent implements IAgent
 		nn.layers.add(new LayerTanh(8, 10));
 		nn.layers.add(new LayerTanh(10, 3));
 		setWeights(weights);
+		ucs = new UCS(true);
 	}
 
 	public void reset() {
@@ -102,38 +107,33 @@ class NeuralAgent implements IAgent
 			//}
 			//float newX = Model.XFLAG;
 			//float newY = Model.YFLAG;
-			if(m.getX(i) > 300)
+			//if(m.getX(i) > 300)
 			findBestDestination(m,i,newX,newY);
-			else
-				m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
+			//else
+			//	m.setDestination(i, m.getX(i) + dx * 10.0f, m.getY(i) + dy * 10.0f);
 		}
 	}
 
 	void beDefender(Model m, int i) {
 		// Find the opponent nearest to my flag
-		//System.out.println("BeDefender.");
 		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
 		if(index >= 0) {
 			float enemyX = m.getXOpponent(index);
 			float enemyY = m.getYOpponent(index);
 
 			// Stay between the enemy and my flag
-			findBestDestination(m,i,0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
+			findBestDestination(m,i,0.6f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 			//m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 
 			// Throw boms if the enemy gets close enough
 			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
 				m.throwBomb(i, enemyX, enemyY);
 		}
-		else {
+		//else {
 			// Guard the flag
-			findBestDestination(m,i,Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
+		//	findBestDestination(m,i,Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
 		//	m.setDestination(i, Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
-		}
-
-		// If I don't have enough energy to throw a bomb, rest
-		if(m.getEnergySelf(i) < Model.BOMB_COST)
-			m.setDestination(i, m.getX(i), m.getY(i));
+		//}
 
 		// Try not to die
 		avoidBombs(m, i);
@@ -152,11 +152,11 @@ class NeuralAgent implements IAgent
 	}
 
 	void beAggressor(Model m, int i) {
-	//	System.out.println("BeAgressor.");
+	
 		float myX = m.getX(i);
 		float myY = m.getY(i);
 		
-	//	shootFlag(m,i);
+		shootFlag(m,i);
 		// Find the opponent nearest to me
 		nearestOpponent(m, myX, myY);
 		
@@ -180,7 +180,7 @@ class NeuralAgent implements IAgent
 					m.throwBomb(i, enemyX, enemyY);
 				}
 			}
-			/*else {
+			else {
 
 				// If the opponent is close enough to shoot at me...
 				if(sq_dist(enemyX, enemyY, myX, myY) <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)) {
@@ -190,8 +190,9 @@ class NeuralAgent implements IAgent
 			//	else {
 			//		m.setDestination(i, myX, myY); // Rest
 			//	}
-			}*/
+			}
 		}
+
 		
 		// Try not to die
 		avoidBombs(m, i);
@@ -209,7 +210,10 @@ class NeuralAgent implements IAgent
 	}
 	
 	private void findBestDestination(Model m, int i, float f, float g) {
-		UCS ucs = new UCS();
+	
+		if(lowestVal == -100)
+			lowestVal = calculateLowest(m);
+		
 		int destX = (int) (Math.ceil(f) / 10) * 10;
 		int destY = (int) (Math.ceil(g) / 10) * 10;
 		
@@ -218,7 +222,7 @@ class NeuralAgent implements IAgent
 		
 	//	System.out.println(i + " BeFlagAttacker. Sx: " + sX + " Sy: " + sY);
 		Block next = ucs.uniform_cost_search(m, new Block(sX,sY,(float) 0.0,null,(float)0.0), 
-				new Block(destX,destY,(float) 0.0,null,(float)0.0));
+				new Block(destX,destY,(float) 0.0,null,(float)0.0), lowestVal);
 		
 		//System.out.println("Flag: " + flagX + "," + flagY);
 		//System.out.println("Next: " + next.x + ", " + next.y);
@@ -237,11 +241,11 @@ class NeuralAgent implements IAgent
 		in[4] = m.getX(2) / 600.0 - 0.5;
 		in[5] = m.getY(2) / 600.0 - 0.5;
 		in[6] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-		in[7] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-		in[8] = nearestOpponent(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
+		in[7] = nearestOpponent(m, m.getX(1), m.getY(1)) / 600.0 - 0.5;
+		in[8] = nearestOpponent(m, m.getX(2), m.getY(2)) / 600.0 - 0.5;
 		in[9] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-		in[10] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
-		in[11] = nearestBombTarget(m, m.getX(0), m.getY(0)) / 600.0 - 0.5;
+		in[10] = nearestBombTarget(m, m.getX(1), m.getY(1)) / 600.0 - 0.5;
+		in[11] = nearestBombTarget(m, m.getX(2), m.getY(2)) / 600.0 - 0.5;
 		in[12] = m.getEnergySelf(0);
 		in[13] = m.getEnergySelf(1);
 		in[14] = m.getEnergySelf(2);
@@ -257,14 +261,14 @@ class NeuralAgent implements IAgent
 		// Do it
 		for(int i = 0; i < 3; i++)
 		{
-			
+			/*
 			int dead  = 0;
 			for(int x = 0; x < 3; x++){
 				if(m.getEnergyOpponent(x) < 0)
 					dead++;
 			}
 		
-			/*if(dead == 2 || dead == 1){
+			if(dead == 2 || dead == 1){
 				
 				if(i == 0)
 				beAggressor(m,i);
@@ -287,15 +291,29 @@ class NeuralAgent implements IAgent
 					beAggressor(m, i);
 				else
 					beAggressor(m, i);
-		//	}
+			//}
 		}
 		
-		//beFlagAttacker(m, 0);
-		//beAggressor(m, 1);
-		//beDefender(m, 2);
+	
+	}
+	
+	float calculateLowest(Model m) {
 		
+		float temp;
+		float lowestVal = 0;
+		if(!heuristicFound){
+		for(int x = 0; x < 1200; x+=10)
+			for(int y =0; y < 600; y+=10){
+				temp = (m.getTravelSpeed(x,y));
+				if(temp > lowestVal)
+					lowestVal = temp;
+			}
+		}
+		return lowestVal;
 	}
 }
+
+
 
 
 class Block {
@@ -358,23 +376,24 @@ class UCS {
 	TreeSet<Block> beenThere;
 	Stack<Block> path;
 	boolean aStar;
-	float heuristic;
 	Block goal;
 	float lowest;
-	public UCS(){
-
+	
+	public UCS(boolean a){
+		this.aStar = a;
 	}
 	
-	/*private float calculateHeur(float xCurr, float yCurr, float xGoal,float yGoal) {
+	private float calculateHeur(float xCurr, float yCurr, float xGoal,float yGoal) {
 		float pow1 = (float) Math.pow((xCurr - xGoal),2);
 		float pow2 = (float) Math.pow((yCurr - yGoal),2);
 		float total = (float) ((Math.sqrt(pow1 + pow2))/lowest);
 		//System.out.println("Lowest: " + lowest +  "total: " + total);
 		return total;
-	}*/
+	}
 	
-	  public Block uniform_cost_search(Model m, Block startState, Block goal) {
-		  
+	  public Block uniform_cost_search(Model m, Block startState, Block goal, float lowest) {
+		this.lowest = lowest;
+		
 		boolean found = false;
 		comp = new BlockComparator();
 		costComp = new CostComparator();
@@ -412,9 +431,6 @@ class UCS {
 	    	//return new Stack();
 	    }
 	    
-	    //m.visited.clear();
-	    
-	  
 	    
 	    Block current = goal;
 	    while(current!=null){ 	
@@ -450,8 +466,13 @@ class UCS {
 				cost =  (float)(10/(m.getTravelSpeed(x,y)));
 			
 			float heur = 0;
-			
-			cost = cost + root.cost;
+			if(aStar){
+				heur = calculateHeur(x,y,goal.x,goal.y);
+				cost = cost + root.cost;
+			}
+			else{
+				cost = cost + root.cost;
+			}
 			
 			
 			Block child = new Block(x,y,cost,root, heur);
