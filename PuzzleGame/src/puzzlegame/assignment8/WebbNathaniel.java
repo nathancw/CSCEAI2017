@@ -22,6 +22,15 @@ import java.io.PrintWriter;
 import javax.imageio.ImageIO;
 
 
+/*--------------------------------------------------------
+ * 
+ * For my Agent, I first modified the reflex agent code to perform its actions differently.
+ * I made changes such as: implementing A* search in its movement and modifying its aggressive behavior.
+ * Next, I used a genetic algorithm on the modified (improved) neural agent to find the
+ * best set of weights for the agent. The best weights were choosen as the start point for the agent.
+ * 
+ *--------------------------------------------------------*/
+
 
 public class WebbNathaniel implements IAgent{
 
@@ -332,6 +341,8 @@ public class WebbNathaniel implements IAgent{
 	
 	
 	
+	/* ------------------ A* Search Code Below --------------------*/
+	/* ------------------------------------------------------------*/
 	
 	static class Block {
 	public float cost;
@@ -512,7 +523,9 @@ public class WebbNathaniel implements IAgent{
 	
 	}
 	
-	///////////END NEURAL AGENT /////////////////////
+	/* ------------------------------------------------------------*/
+	/* ------------------------------------------------------------*/
+
 	
 	static public class Vec
 	{
@@ -1589,163 +1602,162 @@ public class WebbNathaniel implements IAgent{
 			ImageIO.write(image, "png", new File("viz.png"));
 		}
 	}
-////////////////////////////////////////
-//////BEGIN Evolution Algorithm /////
-static class Evolution
-{
 
-	static double[] evolveWeights() throws IOException
-	{
-			
-		// Create a random initial population
-		Random r = new Random();
-		Matrix population = new Matrix(100, 291);
-		for(int i = 0; i < 100; i++)
-		{
-			double[] chromosome = population.row(i);
-			for(int j = 0; j < chromosome.length; j++)
-				chromosome[j] = 0.03 * r.nextGaussian();
-		}
-
-
-		
-		int numEvolutions = 0;
-		int maxEvolutions = 3000;
-		
-		
-		while(numEvolutions < maxEvolutions){
-		//Add mutation
-		//int mutationCount = 0;
-		int mutationRate = 200; //1/mutation rate to be mutated
-		double mutationAverage = 0.3;
-		for(int i = 0; i < 100; i++)
-		{
-			double[] chromosome = population.row(i);
-			for(int j = 0; j < chromosome.length; j++)
-				
-				if(r.nextInt(mutationRate)==0){
-					//Pick random chromosone
-					int mut = r.nextInt(291);
-					double gaus = r.nextGaussian();
-					chromosome[mut]+= mutationAverage * gaus;
-				}
-		}
-		//Done adding mutations
-		
-		//Natural Selection
-		
-		//Choose pair of chromosones
-		int numTournaments = 5;
-		int probToSurvive = 66;
-		for(int x = 0; x < numTournaments; x++){
-			int cNum1 = r.nextInt(100); //First chromosome num
-			int cNum2 = r.nextInt(100); //Second chromosome num
-			
-			double [] chromoOne = population.row(cNum1);
-			double [] chromoTwo = population.row(cNum2);
-
-			//If they aren't the same chromosome, continue to do battle! Also check if they aren't a dead chromo
-			//I'm assuming the chances of 80 being zero are near to none
-			
-			while(cNum1 == cNum2 || chromoOne[1]==0.0 || chromoTwo[1] ==0.0){
-				cNum1 = r.nextInt(100);
-				cNum2 = r.nextInt(100); 
-				chromoTwo = population.row(cNum2);
-				chromoOne = population.row(cNum1);
-			}
-
-				int winner = 0;
-				try {
-					winner = Controller.doBattleNoGui(new Winner2016a(), new WebbNathaniel(chromoTwo));
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-				if(winner == 1){
-					for(int i = 0; i < chromoTwo.length; i++)
-						population.row(cNum2)[i] = 0; //Kill the chromoOne
-				}
-				else if(winner == -1){
-					System.out.println("Chromo two won.");
-					System.out.println(Arrays.toString(chromoTwo));
-					//for(int i = 0; i < chromoTwo.length; i++)
-					//	population.row(cNum1)[i] = 0; //Kill the chromoTWo	
-				}
-				
-				
-		}//End Natural Selection for loop
-		
-		//Replenish the population!
-		
-		int numCandidates = 5;
-		double difference = 0.05;
-		for(int i = 0; i < 100; i++){
-			
-			//If its a dead chromo, make a baby!!
-			if(population.row(i)[0] == 0.0){
-				int parent1 = r.nextInt(100); //Pick first parent
-				
-				while(parent1==i || population.row(parent1)[0] ==0.0) //Make sure its not the same as the dead child
-					parent1 = r.nextInt(100);
-				
-				int candidates[] = new int[numCandidates];
-				int parent2 = 0;
-				for(int x = 0; x < numCandidates; x++){
-					parent2 = r.nextInt(100); //Pick second parent
-					
-					while(parent2 == parent1 || parent2 == i || population.row(parent2)[0] ==0.0) //Make sure its not the same as the dead child or the first parent
-						parent2 = r.nextInt(100);
-					candidates[x] = parent2;			
-				}
-				
-				//Find whos the most similiar
-				double[] dad = population.row(parent1);
-				int bestMom = 0;
-				double parentDifference = 5000000; //We have hugely different parents
-				double testDifference;
-				for(int x = 0; x < numCandidates; x++){
-					double[] testMom = population.row(candidates[x]);
-					testDifference = 0;
-					
-					for(int c = 0; c < dad.length; c++){
-						testDifference+= Math.pow((dad[c] - testMom[c]), 2);
-					}
-					if(testDifference < parentDifference && testMom[0]!=0.0){
-						parentDifference = testDifference;
-						bestMom = candidates[x];
-					}
-						
-				}//Done finding best parent
-				
-				//Lets mate!
-				double[] mom = population.row(bestMom);
-				for(int x = 0; x < dad.length; x++){
-					int rand = r.nextInt(2);
-					
-					if(rand == 0){
-						population.row(i)[x] = dad[x];
-						
-					}
-					else{
-						population.row(i)[x] = mom[x];
-					}
-				}
-				
-			}
-		}
-
-		numEvolutions++;
-		System.out.println("Evolution number: " + numEvolutions);
-	}//End of while
-
-		return population.row(40);
-	}
-}
-//////END Evolution Algorithm /////
 	
-
-	//public static void main(String[] args) throws Exception
-	//{
-	//	Controller.doBattle(new WebbNathaniel(), new WebbNathaniel());
-	//}
+	/* ------------------------------------------------------------*/
+	/* ----------------------Genetic Algorithm Below---------------*/
+	/* ------------------------------------------------------------*/
+		static class Evolution
+	{
+	
+		static double[] evolveWeights() throws IOException
+		{
+				
+			// Create a random initial population
+			Random r = new Random();
+			Matrix population = new Matrix(100, 291);
+			for(int i = 0; i < 100; i++)
+			{
+				double[] chromosome = population.row(i);
+				for(int j = 0; j < chromosome.length; j++)
+					chromosome[j] = 0.03 * r.nextGaussian();
+			}
+	
+	
+			
+			int numEvolutions = 0;
+			int maxEvolutions = 3000;
+			
+			
+			while(numEvolutions < maxEvolutions){
+			//Add mutation
+			//int mutationCount = 0;
+			int mutationRate = 200; //1/mutation rate to be mutated
+			double mutationAverage = 0.3;
+			for(int i = 0; i < 100; i++)
+			{
+				double[] chromosome = population.row(i);
+				for(int j = 0; j < chromosome.length; j++)
+					
+					if(r.nextInt(mutationRate)==0){
+						//Pick random chromosone
+						int mut = r.nextInt(291);
+						double gaus = r.nextGaussian();
+						chromosome[mut]+= mutationAverage * gaus;
+					}
+			}
+			//Done adding mutations
+			
+			//Natural Selection
+			
+			//Choose pair of chromosones
+			int numTournaments = 5;
+			int probToSurvive = 66;
+			for(int x = 0; x < numTournaments; x++){
+				int cNum1 = r.nextInt(100); //First chromosome num
+				int cNum2 = r.nextInt(100); //Second chromosome num
+				
+				double [] chromoOne = population.row(cNum1);
+				double [] chromoTwo = population.row(cNum2);
+	
+				//If they aren't the same chromosome, continue to do battle! Also check if they aren't a dead chromo
+				//I'm assuming the chances of 80 being zero are near to none
+				
+				while(cNum1 == cNum2 || chromoOne[1]==0.0 || chromoTwo[1] ==0.0){
+					cNum1 = r.nextInt(100);
+					cNum2 = r.nextInt(100); 
+					chromoTwo = population.row(cNum2);
+					chromoOne = population.row(cNum1);
+				}
+	
+					int winner = 0;
+					try {
+						winner = Controller.doBattleNoGui(new Winner2016a(), new WebbNathaniel(chromoTwo));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+	
+					if(winner == 1){
+						for(int i = 0; i < chromoTwo.length; i++)
+							population.row(cNum2)[i] = 0; //Kill the chromoOne
+					}
+					else if(winner == -1){
+						System.out.println("Chromo two won.");
+						System.out.println(Arrays.toString(chromoTwo));
+						//for(int i = 0; i < chromoTwo.length; i++)
+						//	population.row(cNum1)[i] = 0; //Kill the chromoTWo	
+					}
+					
+					
+			}//End Natural Selection for loop
+			
+			//Replenish the population!
+			
+			int numCandidates = 5;
+			double difference = 0.05;
+			for(int i = 0; i < 100; i++){
+				
+				//If its a dead chromo, make a baby!!
+				if(population.row(i)[0] == 0.0){
+					int parent1 = r.nextInt(100); //Pick first parent
+					
+					while(parent1==i || population.row(parent1)[0] ==0.0) //Make sure its not the same as the dead child
+						parent1 = r.nextInt(100);
+					
+					int candidates[] = new int[numCandidates];
+					int parent2 = 0;
+					for(int x = 0; x < numCandidates; x++){
+						parent2 = r.nextInt(100); //Pick second parent
+						
+						while(parent2 == parent1 || parent2 == i || population.row(parent2)[0] ==0.0) //Make sure its not the same as the dead child or the first parent
+							parent2 = r.nextInt(100);
+						candidates[x] = parent2;			
+					}
+					
+					//Find whos the most similiar
+					double[] dad = population.row(parent1);
+					int bestMom = 0;
+					double parentDifference = 5000000; //We have hugely different parents
+					double testDifference;
+					for(int x = 0; x < numCandidates; x++){
+						double[] testMom = population.row(candidates[x]);
+						testDifference = 0;
+						
+						for(int c = 0; c < dad.length; c++){
+							testDifference+= Math.pow((dad[c] - testMom[c]), 2);
+						}
+						if(testDifference < parentDifference && testMom[0]!=0.0){
+							parentDifference = testDifference;
+							bestMom = candidates[x];
+						}
+							
+					}//Done finding best parent
+					
+					//Lets mate!
+					double[] mom = population.row(bestMom);
+					for(int x = 0; x < dad.length; x++){
+						int rand = r.nextInt(2);
+						
+						if(rand == 0){
+							population.row(i)[x] = dad[x];
+							
+						}
+						else{
+							population.row(i)[x] = mom[x];
+						}
+					}
+					
+				}
+			}
+	
+			numEvolutions++;
+			System.out.println("Evolution number: " + numEvolutions);
+		}//End of while
+	
+			return population.row(40);
+		}
+	}
+		
+	/* ------------------------------------------------------------*/
+	/* ------------------------------------------------------------*/
 }
