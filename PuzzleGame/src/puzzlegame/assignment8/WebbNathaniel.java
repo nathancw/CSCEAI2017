@@ -293,7 +293,7 @@ public class WebbNathaniel implements IAgent{
 		double[] out = nn.forwardProp(in);
 	
 		// Do it
-		if(accum>150){
+		if(accum>200){
 			for(int i = 0; i < 3; i++)
 			{
 			
