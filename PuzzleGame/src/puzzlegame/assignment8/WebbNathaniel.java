@@ -27,8 +27,13 @@ import javax.imageio.ImageIO;
  * For my Agent, I first modified the reflex agent code to perform its actions differently.
  * I made changes such as: implementing A* search in its movement and modifying its aggressive behavior.
  * Next, I used a genetic algorithm on the modified (improved) neural agent to find the
- * best set of weights for the agent. The best weights were choosen as the start point for the agent.
+ * best set of weights for the agent. The best weights were chosen as the start point for the agent.
  * 
+ * Most of my code has been sourced from Michael Gashler's Neural Agent, LayTahn, Neural Net code. Likewise,
+ * some of my bomb throwing mechanics have inspiration from Winner2015b. The Winner2015b's agent is overly
+ * aggressive and causes agents to dodge bombs that aren't even landing towards them. This aggressive bomb 
+ * throwing was key change to making the neural agent stronger. Combine this with genetic algorithm and you
+ * have agents who can continually beat other old neural agents.
  *--------------------------------------------------------*/
 
 
@@ -172,6 +177,7 @@ public class WebbNathaniel implements IAgent{
 			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 				m.throwBomb(i, enemyX, enemyY);
 			}
+			//Code below has taken inspiration from Winner2015b and modified from Winner2015b.
 			else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25 ) ) {
 				float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
 				float throwX = dx * factor + enemyX;
@@ -225,6 +231,7 @@ public class WebbNathaniel implements IAgent{
 				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
 					m.throwBomb(i, enemyX, enemyY);
 				}
+				//Code below has taken inspiration from Winner2015b and modified from Winner2015b.
 				else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * 0.25 ) ) {
 					float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
 					float throwX = dx * factor + enemyX;
