@@ -21,8 +21,12 @@ class Game {
 
 	public static void main(String[] args) throws Exception {
 	
-		Controller.doBattle(new WebbNathaniel(), new BrandtZach());
-		//System.out.println(Controller.doBattleNoGui(new WebbNathaniel(), new BrandtZach()));
+		Controller.doBattle(new WebbNathaniel(), new Winner2016a());
+		System.out.println(Controller.doBattleNoGui(new WebbNathaniel(), new Winner2015b()));
+		System.out.println(Controller.doBattleNoGui(new WebbNathaniel(), new Winner2015a()));
+		System.out.println(Controller.doBattleNoGui(new WebbNathaniel(), new Winner2016a()));
+		System.out.println(Controller.doBattleNoGui(new WebbNathaniel(), new BrandtZach()));
+		
 		//Controller.doBattle(new Winner2015b(), new WebbNathaniel());
 		//Controller.doBattle(new Mixed(),new Blitz());
 		//Controller.doBattle(new Mixed(), new AggressivePack());
