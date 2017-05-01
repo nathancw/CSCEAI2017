@@ -48,7 +48,7 @@ public class WebbNathaniel implements IAgent{
 	UCS ucs;
 	float lowestVal = -100;
 	int accum;
-	double coeff = 0.5;
+	double coeff = 0.3125;
 	
 	WebbNathaniel() {
 		//double[] weights;
@@ -178,7 +178,6 @@ public class WebbNathaniel implements IAgent{
 			dy *= t;
 			
 			
-			
 			// Stay between the enemy and my flag
 			findBestDestination(m,i,0.6f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 			//m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
@@ -221,52 +220,54 @@ public class WebbNathaniel implements IAgent{
 		float myX = m.getX(i);
 		float myY = m.getY(i);
 		
-		if(i == 2)
-			coeff = 0.25;
-		//shootFlag(m,i);
-		// Find the opponent nearest to me
-		nearestOpponent(m, myX, myY);
+		if(i == 1){
+			beDefender(m,i);
+		}
+		else{
+			// Find the opponent nearest to me
+			nearestOpponent(m, myX, myY);
+			
+			if(index >= 0) {
+				float enemyX = m.getXOpponent(index);
+				float enemyY = m.getYOpponent(index);
 		
-		if(index >= 0) {
-			float enemyX = m.getXOpponent(index);
-			float enemyY = m.getYOpponent(index);
-	
-			if(m.getEnergySelf(i) >= m.getEnergyOpponent(index)) {
-	
-				// Get close enough to throw a bomb at the enemy
-				float dx = myX - enemyX;
-				float dy = myY - enemyY;
-				float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
-				dx *= t;
-				dy *= t;
-				findBestDestination(m,i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
-				//m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
-	
-				// Throw bombs
-				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
-					m.throwBomb(i, enemyX, enemyY);
-				}
-				//Code below has taken inspiration from Winner2015b and modified from Winner2015b.
-				else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * coeff ) ) {
-					float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
-					float throwX = dx * factor + enemyX;
-					float throwY = dy * factor + enemyY;
-					//System.out.println("---------------------------------------------------");
-					m.throwBomb(i,throwX,throwY);
-				}
-				else if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
-						m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
+				if(m.getEnergySelf(i) >= m.getEnergyOpponent(index)) {
+		
+					// Get close enough to throw a bomb at the enemy
+					float dx = myX - enemyX;
+					float dy = myY - enemyY;
+					float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
+					dx *= t;
+					dy *= t;
+					findBestDestination(m,i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+					//m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+		
+					// Throw bombs
+					if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS){
+						m.throwBomb(i, enemyX, enemyY);
 					}
-				
-				
+					//Code below has taken inspiration from Winner2015b and modified from Winner2015b.
+					else if (Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)))  < Model.MAX_THROW_RADIUS + (Model.BLAST_RADIUS * coeff ) ) {
+						float factor = (float) (Model.MAX_THROW_RADIUS / Math.sqrt(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i))) );
+						float throwX = dx * factor + enemyX;
+						float throwY = dy * factor + enemyY;
+						//System.out.println("---------------------------------------------------");
+						m.throwBomb(i,throwX,throwY);
+					}
+					else if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
+							m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
+						}
+					
+					
+					
+				}
 				
 			}
-			
-		}
-	
+		
 		
 		// Try not to die
 		avoidBombs(m, i);
+		}
 	}
 	
 	
@@ -333,18 +334,17 @@ public class WebbNathaniel implements IAgent{
 		if(accum>150){
 			for(int i = 0; i < 3; i++)
 			{
-			
-				if(m.getEnergyOpponent(0) < 0 && m.getEnergyOpponent(1) < 0 && m.getEnergyOpponent(2) < 0){
-					beFlagAttacker(m,i);
-				}
-				else{
+	
 					if(out[i] < -0.333)
 						beDefender(m, i);
 					else if(out[i] > 0.333)
 						beAggressor(m, i);
 					else
 						beAggressor(m, i);
-				}
+						
+					if(m.getEnergyOpponent(0) < 0 && m.getEnergyOpponent(1) < 0 && m.getEnergyOpponent(2) < 0){
+						beFlagAttacker(m,i);
+					}
 			}
 		}
 		accum++;
